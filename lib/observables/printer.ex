@@ -22,6 +22,10 @@ defmodule Observable.Printer do
     {:ok, state}
   end
 
+  # API ########################################################################
+
+
+
   def handle_info({:new_value, value}, state) do
     IO.puts value
     {:noreply, state}

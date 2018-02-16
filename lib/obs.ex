@@ -19,15 +19,7 @@ alias Observable.{Random, Printer, Map, Filter, ProducerConsumer}
             new_v = f.(v)
             {:next_value, new_v}
         end
-
-        # Start the producer/consumer server.
-        {:ok, pid} = GenServer.start_link(ProducerConsumer, mapper)
-
-        # Creat the continuation.
-        fn(observer) ->
-            observable_fn.(pid)
-            ProducerConsumer.subscribe(pid, observer)
-        end
+        create_producer_consumer(observable_fn, mapper)
     end
 
     def filter(observable_fn, f) do
@@ -39,15 +31,7 @@ alias Observable.{Random, Printer, Map, Filter, ProducerConsumer}
                 {:no_value, "filter did not match"}
             end
         end
-
-        # Start the producer/consumer server.
-        {:ok, pid} = GenServer.start_link(ProducerConsumer, filterer)
-
-        # Creat the continuation.
-        fn(observer) ->
-            observable_fn.(pid)
-            ProducerConsumer.subscribe(pid, observer)
-        end
+        create_producer_consumer(observable_fn, filterer)
     end
 
 # TERMINATORS ##################################################################
@@ -56,5 +40,19 @@ alias Observable.{Random, Printer, Map, Filter, ProducerConsumer}
         {:ok, pid} = GenServer.start_link(Printer, [])
         observable_fn.(pid)
     end
+
+# HELPERS ######################################################################
+
+
+defp create_producer_consumer(observable_fn, action) do
+    # Start the producer/consumer server.
+    {:ok, pid} = GenServer.start_link(ProducerConsumer, action)
+
+    # Creat the continuation.
+    fn(observer) ->
+        observable_fn.(pid)
+        ProducerConsumer.subscribe(pid, observer)
+    end
+end
 
 end

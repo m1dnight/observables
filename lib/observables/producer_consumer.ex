@@ -25,7 +25,7 @@ defmodule Observable.ProducerConsumer do
     output = state.state.action.(value)
     case output do
       {:next_value, v} -> notify_all(v, state.observers)
-      {:no_value, e}   -> :ok
+      {:no_value, _e}  -> :ok
     end
     {:noreply, state}
   end
