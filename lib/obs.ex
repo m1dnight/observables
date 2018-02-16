@@ -31,10 +31,22 @@ alias Observable.{Random, Printer, Map, Filter, ProducerConsumer}
     end
 
     def filter(observable_fn, f) do
-        {:ok, pid} = GenServer.start_link(Filter, f)
+        # Creat the wrapper for the filter function.
+        filterer = fn(v) ->
+            if f.(v) do
+                {:next_value, v}
+            else
+                {:no_value, "filter did not match"}
+            end
+        end
+
+        # Start the producer/consumer server.
+        {:ok, pid} = GenServer.start_link(ProducerConsumer, filterer)
+
+        # Creat the continuation.
         fn(observer) ->
             observable_fn.(pid)
-            Filter.subscribe(pid, observer)
+            ProducerConsumer.subscribe(pid, observer)
         end
     end
 
