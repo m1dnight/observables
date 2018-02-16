@@ -3,11 +3,10 @@ defmodule Observable.ProducerConsumer do
   A GenServer template for a "singleton" process.
   """
   use Observable
-  require Logger
 
   # Initialization
   def start_link(action) do
-    GenServer.start_link(__MODULE__, action, [name: __MODULE__])
+    GenServer.start_link(__MODULE__, action)
   end
 
   def init(action) do
@@ -26,6 +25,7 @@ defmodule Observable.ProducerConsumer do
     case output do
       {:next_value, v} -> notify_all(v, state.observers)
       {:no_value, _e}  -> :ok
+      _                -> raise "invalid return value from action: #{inspect output}"
     end
     {:noreply, state}
   end

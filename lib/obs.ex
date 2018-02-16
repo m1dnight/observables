@@ -4,12 +4,18 @@ alias Observable.{Random, Printer, Map, Filter, ProducerConsumer}
 
 # GENERATORS ###################################################################
  
-    def random() do
-        {:ok, pid} = GenServer.start_link(Random, [])
+    def from_pid(pid) do
         fn(observer) ->
-            Random.subscribe(pid, observer)
+            ProducerConsumer.subscribe(pid, observer)
         end
     end
+
+    # def random() do
+    #     {:ok, pid} = GenServer.start_link(Random, [])
+    #     fn(observer) ->
+    #         Random.subscribe(pid, observer)
+    #     end
+    # end
 
 # CONSUMER AND PRODUCER ########################################################
 
@@ -37,22 +43,27 @@ alias Observable.{Random, Printer, Map, Filter, ProducerConsumer}
 # TERMINATORS ##################################################################
 
     def print(observable_fn) do
-        {:ok, pid} = GenServer.start_link(Printer, [])
-        observable_fn.(pid)
+        action = fn(v) -> IO.puts(v) ; {:next_value, v} end
+        create_consumer(observable_fn, action)
     end
 
 # HELPERS ######################################################################
 
 
-defp create_producer_consumer(observable_fn, action) do
-    # Start the producer/consumer server.
-    {:ok, pid} = GenServer.start_link(ProducerConsumer, action)
+    defp create_producer_consumer(observable_fn, action) do
+        # Start the producer/consumer server.
+        {:ok, pid} = GenServer.start_link(ProducerConsumer, action)
 
-    # Creat the continuation.
-    fn(observer) ->
-        observable_fn.(pid)
-        ProducerConsumer.subscribe(pid, observer)
+        # Creat the continuation.
+        fn(observer) ->
+            observable_fn.(pid)
+            ProducerConsumer.subscribe(pid, observer)
+        end
     end
-end
 
+    defp create_consumer(observable_fn, action) do
+        {:ok, pid} = GenServer.start_link(ProducerConsumer, action)
+        observable_fn.(pid)
+        :ok
+    end
 end
