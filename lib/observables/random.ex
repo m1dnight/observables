@@ -35,13 +35,6 @@ defmodule Observable.Random do
     {:noreply, state}
   end
 
-  # Helpers ####################################################################
-
-  defp notify_all(value, observers) do
-    observers
-    |> Enum.map(fn(obs) -> send(obs, {:new_value, value}) end)
-  end
-
   defp generate() do
     Process.send_after(self(), :generate, 10)
     :rand.uniform(100)

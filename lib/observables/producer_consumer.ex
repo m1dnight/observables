@@ -1,4 +1,4 @@
-defmodule Observable.Filter do
+defmodule Observable.ProducerConsumer do
   @moduledoc """
   A GenServer template for a "singleton" process.
   """
@@ -22,8 +22,10 @@ defmodule Observable.Filter do
   end
 
   def handle_info({:new_value, value}, state) do
-    if state.state.action.(value) do
-      notify_all(value, state.observers)
+    output = state.state.action.(value)
+    case output do
+      {:next_value, v} -> notify_all(v, state.observers)
+      {:no_value, e}   -> :ok
     end
     {:noreply, state}
   end

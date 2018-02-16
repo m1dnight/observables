@@ -1,6 +1,6 @@
 defmodule Observables.Obs do
 
-alias Observable.{Random, Printer, Map, Filter}
+alias Observable.{Random, Printer, Map, Filter, ProducerConsumer}
 
 # GENERATORS ###################################################################
  
@@ -14,10 +14,19 @@ alias Observable.{Random, Printer, Map, Filter}
 # CONSUMER AND PRODUCER ########################################################
 
     def map(observable_fn, f) do
-        {:ok, pid} = GenServer.start_link(Map, f)
+        # Create the mapper function.
+        mapper = fn(v) ->
+            new_v = f.(v)
+            {:next_value, new_v}
+        end
+
+        # Start the producer/consumer server.
+        {:ok, pid} = GenServer.start_link(ProducerConsumer, mapper)
+
+        # Creat the continuation.
         fn(observer) ->
             observable_fn.(pid)
-            Map.subscribe(pid, observer)
+            ProducerConsumer.subscribe(pid, observer)
         end
     end
 
