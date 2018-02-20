@@ -59,10 +59,11 @@ defmodule GenObservable do
     
     def handle_cast({:notify_all, value}, state) do
       state.observers
-      |> Enum.map(fn(obs) -> send(obs, {:new_value, value}) end)  
+      |> Enum.map(fn(obs) -> GenObservable.send_event(obs, value) end)  
       {:noreply, state}            
     end
     
+
     def handle_cast({:event, value}, state) do
       case state.module.handle_event(value, state.state) do
         {:value, value, s} -> 

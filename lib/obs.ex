@@ -1,7 +1,7 @@
 defmodule Observables.Obs do
     
 
-    alias Observable.{Random, Printer, Map, Filter, ProducerConsumer}
+    alias Observable.{Action}
 
 # GENERATORS ###################################################################
  
@@ -46,7 +46,7 @@ defmodule Observables.Obs do
 # TERMINATORS ##################################################################
 
     def print(observable_fn) do
-        action = fn(v) -> IO.puts(v) ; {:next_value, v} end
+        action = fn(v) -> IO.puts(v) ; {:value, v} end
         create_consumer(observable_fn, action)
     end
 
