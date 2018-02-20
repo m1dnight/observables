@@ -28,6 +28,15 @@ alias Observable.{Random, Printer, Map, Filter, ProducerConsumer}
         create_producer_consumer(observable_fn, mapper)
     end
 
+    def each(observable_fn, f) do
+        # Create the mapper function.
+        eacher = fn(v) ->
+            new_v = f.(v)
+            {:next_value, v}
+        end
+        create_producer_consumer(observable_fn, eacher)
+    end
+
     def filter(observable_fn, f) do
         # Creat the wrapper for the filter function.
         filterer = fn(v) ->

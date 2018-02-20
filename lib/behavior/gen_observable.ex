@@ -1,5 +1,6 @@
 defmodule GenObservable do
     require Logger
+    import GenServer 
 
     defstruct  observers: [], observed: [], last: [], state: %{}, module: :nil
 
@@ -63,10 +64,9 @@ defmodule GenObservable do
     end
     
     def handle_cast({:event, value}, state) do
-      Logger.debug "Handling event: #{value}"
       case state.module.handle_event(value, state.state) do
         {:notify_all, value, new_state} -> 
-          GenObservable.notify_all(self(), value)
+          cast(self(), {:notify_all, value})
           {:noreply, %{state | state: new_state}}
         {:ok, new_state} -> 
           {:noreply, %{state | state: new_state}}
@@ -82,7 +82,7 @@ defmodule GenObservable do
     Sends a message to observee_pid that observer_pid no longer wants to be notified of events.
     """
     def subscribe(observee_pid, observer_pid) do
-      GenServer.call(observee_pid, {:subscribe, observer_pid})
+      call(observee_pid, {:subscribe, observer_pid})
     end
 
     
@@ -90,7 +90,7 @@ defmodule GenObservable do
     Sends a message to observee_pid that observer_pid needs to be notified of new events.
     """
     def unsubscribe(observee_pid, observer_pid) do
-      GenServer.cast(observee_pid, {:unsubscribe, observer_pid})
+      cast(observee_pid, {:unsubscribe, observer_pid})
     end
 
     @doc """
@@ -98,14 +98,14 @@ defmodule GenObservable do
     for its dependees.
     """
     def send_event(observee_pid, value) do
-      GenServer.cast(observee_pid, {:event, value})
+      cast(observee_pid, {:event, value})
     end
     
     @doc """
     Sends a notification to all observers with the new value.
     """
     def notify_all(observee_pid, value) do
-      GenServer.cast(observee_pid, {:notify_all, value})
+      cast(observee_pid, {:notify_all, value})
     end
 
 end
