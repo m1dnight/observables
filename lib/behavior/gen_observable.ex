@@ -65,11 +65,11 @@ defmodule GenObservable do
     
     def handle_cast({:event, value}, state) do
       case state.module.handle_event(value, state.state) do
-        {:notify_all, value, new_state} -> 
+        {:value, value, s} -> 
           cast(self(), {:notify_all, value})
-          {:noreply, %{state | state: new_state}}
-        {:ok, new_state} -> 
-          {:noreply, %{state | state: new_state}}
+          {:noreply, %{state | state: s}}
+        {:novalue, s} -> 
+          {:noreply, %{state | state: s}}
       end
     end
 
