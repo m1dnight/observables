@@ -74,6 +74,11 @@ defmodule GenObservable do
       end
     end
 
+    def handle_info({:event, value}, state) do
+      cast(self(), {:event, value})
+      {:noreply, state}
+    end
+
     
     #######
     # API #

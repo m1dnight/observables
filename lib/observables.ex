@@ -11,8 +11,7 @@ defmodule Observables do
       {:value, message, state}
   end
 
-  def run do
-
+  def test1 do
       # Start a random GenServer
   
       {:ok, pid} = GenObservable.start_link(Observables, 0, [name: :foobar])
@@ -22,5 +21,17 @@ defmodule Observables do
       |> Obs.map(fn(v) -> v * 3 end)
       |> Obs.each(fn(v) -> Logger.debug "Got a value: #{v}" end)
       |> Obs.print
-    end
+  end
+
+  def test2 do
+    # Start a random GenServer
+
+
+    [1,2,3]
+    |> Obs.from_enum
+    |> Obs.filter(fn(x) -> rem(x, 2) == 0 end)
+    |> Obs.map(fn(v) -> v * 3 end)
+    |> Obs.each(fn(v) -> Logger.debug "Got a value: #{v}" end)
+    |> Obs.print
+  end
 end

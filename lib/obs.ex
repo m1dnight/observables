@@ -1,11 +1,30 @@
 defmodule Observables.Obs do
     
 
-    alias Observable.{Action}
-
+    alias Observable.{Action, StatefulAction}
+    import Enum 
 # GENERATORS ###################################################################
  
     def from_pid(pid) do
+        fn(observer) ->
+            GenObservable.subscribe(pid, observer)
+        end
+    end
+
+    def from_enum(coll, delay \\ 1000) do
+        action = fn(:spit, state) ->
+            [v] = take(state, 1)
+            r = drop(state, 1)
+
+            Process.send_after(self(), {:event, :spit}, delay)
+
+            {:value, v, r}
+        end
+
+        {:ok, pid} = GenObservable.start_link(StatefulAction, [action, coll])
+
+        Process.send_after(pid, {:event, :spit}, delay)
+
         fn(observer) ->
             GenObservable.subscribe(pid, observer)
         end
