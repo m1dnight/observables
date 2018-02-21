@@ -10,10 +10,17 @@ defmodule Observables.GenObservable do
 
     @callback handle_event(message :: any, state :: any) :: any
 
+    @callback handle_done(pid :: any, state :: any) :: any
     
     defmacro __using__(_) do
         quote location: :keep do
-         
+
+          require Logger
+          def handle_done(pid, _state) do
+              :ok
+          end
+
+          defoverridable handle_done: 2
         end
     end
 
@@ -57,6 +64,7 @@ defmodule Observables.GenObservable do
       {:noreply, %{state | observers: [pid | state.observers]}}
     end
 
+
     def handle_cast({:subscribe_to, pid}, state) do
       {:noreply, %{state | observed: [pid | state.observed]}}
     end
@@ -69,6 +77,7 @@ defmodule Observables.GenObservable do
       {:noreply, %{state | observers: new_subs}}
     end          
 
+
     def handle_cast({:unsubscribe_to, pid}, state) do
       new_subs =  state.observed
                   |> Enum.filter(fn(sub) -> sub != pid end)
@@ -76,11 +85,13 @@ defmodule Observables.GenObservable do
       {:noreply, %{state | observed: new_subs}}
     end 
     
+
     def handle_cast({:notify_all, value}, state) do
       state.observers
       |> Enum.map(fn(obs) -> GenObservable.send_event(obs, value) end)  
       {:noreply, state}            
     end
+
 
     def handle_cast(:stop, state) do
       Logger.debug "#{inspect self()} - stopping"
@@ -89,8 +100,10 @@ defmodule Observables.GenObservable do
       {:stop, :normal, state}
     end
 
+
     def handle_cast({:dependency_stopping, pid}, state) do
       Logger.debug "#{inspect self()} - dependency #{inspect pid} stopping"
+      state.module.handle_done(pid, state.state)
       # Remove observee.
       new_subs =  state.observed
                   |> Enum.filter(fn(sub) -> sub != pid end)
@@ -117,10 +130,12 @@ defmodule Observables.GenObservable do
       end
     end
 
+
     def handle_info({:event, value}, state) do
       cast(self(), {:event, value})
       {:noreply, state}
     end
+
 
     def terminate(_reason, _state) do
       :ok 
@@ -155,5 +170,7 @@ defmodule Observables.GenObservable do
     def send_event(observee_pid, value) do
       cast(observee_pid, {:event, value})
     end
+
+    
 
 end
