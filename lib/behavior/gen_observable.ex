@@ -57,6 +57,10 @@ defmodule Observables.GenObservable do
       {:noreply, %{state | observers: [pid | state.observers]}}
     end
 
+    def handle_cast({:subscribe_to, pid}, state) do
+      {:noreply, %{state | observed: [pid | state.observed]}}
+    end
+
     
     def handle_cast({:unsubscribe, pid}, state) do
       new_subs =  state.observers
@@ -65,6 +69,12 @@ defmodule Observables.GenObservable do
       {:noreply, %{state | observers: new_subs}}
     end          
 
+    def handle_cast({:unsubscribe_to, pid}, state) do
+      new_subs =  state.observed
+                  |> Enum.filter(fn(sub) -> sub != pid end)
+    
+      {:noreply, %{state | observed: new_subs}}
+    end 
     
     def handle_cast({:notify_all, value}, state) do
       state.observers
@@ -73,16 +83,24 @@ defmodule Observables.GenObservable do
     end
 
     def handle_cast(:stop, state) do
+      Logger.debug "#{inspect self()} - stopping"
       state.observers 
       |> Enum.map(fn(obs) -> cast(obs, {:dependency_stopping, self()}) end)
       {:stop, :normal, state}
     end
 
     def handle_cast({:dependency_stopping, pid}, state) do
-      if count(state.observers) != 0 do
+      Logger.debug "#{inspect self()} - dependency #{inspect pid} stopping"
+      # Remove observee.
+      new_subs =  state.observed
+                  |> Enum.filter(fn(sub) -> sub != pid end)
+
+      if count(new_subs) == 0 do
+        Logger.debug "#{inspect self()} - Listening to nobody anymore, going offline."
         cast(self(), :stop)
       end
-      {:noreply, state}
+
+      {:noreply, %{state | observed: new_subs}}
     end
     
 
@@ -114,18 +132,20 @@ defmodule Observables.GenObservable do
     #######
     
     @doc """
-    Sends a message to observee_pid that observer_pid no longer wants to be notified of events.
+    Sends a message to observee_pid that observer_pid needs to be notified of new events.
+
     """
     def subscribe(observee_pid, observer_pid) do
       cast(observee_pid, {:subscribe, observer_pid})
+      cast(observer_pid, {:subscribe_to, observee_pid})
     end
 
-    
     @doc """
-    Sends a message to observee_pid that observer_pid needs to be notified of new events.
+    Sends a message to observee_pid that observer_pid no longer wants to be notified of events.
     """
     def unsubscribe(observee_pid, observer_pid) do
       cast(observee_pid, {:unsubscribe, observer_pid})
+      cast(observer_pid, {:ubsubscribe_to, observee_pid})
     end
 
     @doc """
