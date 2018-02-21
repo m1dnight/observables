@@ -1,8 +1,8 @@
-defmodule Observable.Action do
+defmodule Observables.Action do
   @moduledoc """
   A GenServer template for a "singleton" process.
   """
-  use GenObservable
+  use Observables.GenObservable
 
   def init(action) do
     {:ok, action}

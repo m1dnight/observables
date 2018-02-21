@@ -1,6 +1,7 @@
-defmodule GenObservable do
+defmodule Observables.GenObservable do
     require Logger
     import GenServer 
+    alias Observables.GenObservable
 
     defstruct  observers: [], observed: [], last: [], state: %{}, module: :nil
 
@@ -28,6 +29,9 @@ defmodule GenObservable do
       GenServer.start_link(__MODULE__, {module, args}, options)
     end
 
+    def start(module, args, options \\ []) do
+      GenServer.start(__MODULE__, {module, args}, options)
+    end
     
     @doc """ 
     This function is called by the GenServer process. Here we call the init function f the module provided
@@ -71,6 +75,9 @@ defmodule GenObservable do
           {:noreply, %{state | state: s}}
         {:novalue, s} -> 
           {:noreply, %{state | state: s}}
+        {:done, s} ->
+          Logger.debug "Stopping"
+          {:stop, :normal, :done, %{state | state: s}}
       end
     end
 
@@ -78,6 +85,11 @@ defmodule GenObservable do
       cast(self(), {:event, value})
       {:noreply, state}
     end
+
+    def terminate(reason, _status) do
+      IO.puts "#{inspect self()} asked to stop because #{inspect reason}"
+      :ok 
+    end 
 
     
     #######
@@ -105,13 +117,6 @@ defmodule GenObservable do
     """
     def send_event(observee_pid, value) do
       cast(observee_pid, {:event, value})
-    end
-    
-    @doc """
-    Sends a notification to all observers with the new value.
-    """
-    def notify_all(observee_pid, value) do
-      cast(observee_pid, {:notify_all, value})
     end
 
 end

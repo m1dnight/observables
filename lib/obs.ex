@@ -1,8 +1,7 @@
 defmodule Observables.Obs do
+    alias Observables.{Action, StatefulAction, GenObservable}
     
-
-    alias Observable.{Action, StatefulAction}
-    import Enum 
+    
 # GENERATORS ###################################################################
  
     def from_pid(pid) do
@@ -11,17 +10,20 @@ defmodule Observables.Obs do
         end
     end
 
+    @doc """
+    Takes an enumerable and will "spit" each value one by one, every delay seconds.
+    If the enum is consumed, returns done.
+    """
     def from_enum(coll, delay \\ 1000) do
         action = fn(:spit, state) ->
-            [v] = take(state, 1)
-            r = drop(state, 1)
-
-            Process.send_after(self(), {:event, :spit}, delay)
-
-            {:value, v, r}
+            case state do
+                []     -> {:done, state}
+                [x|xs] -> Process.send_after(self(), {:event, :spit}, delay)
+                          {:value, x, xs}
+            end
         end
 
-        {:ok, pid} = GenObservable.start_link(StatefulAction, [action, coll])
+        {:ok, pid} = GenObservable.start(StatefulAction, [action, coll])
 
         Process.send_after(pid, {:event, :spit}, delay)
 
