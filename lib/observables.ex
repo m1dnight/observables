@@ -17,7 +17,7 @@ defmodule Observables do
       # Start a random GenServer
       #{:ok, pid} = GenObservable.start_link(Observables, 0, [name: :foobar])
       #{:ok, pid} = Observables.Supervisor.add_child(Observables, [0])
-      {:ok, pid} = GenObservable.spawn_supervised(Observables, [0])
+      {:ok, pid} = GenObservable.spawn_supervised(Observables, 0)
       Obs.from_pid(pid)
       |> Obs.filter(fn(x) -> rem(x, 2) == 0 end)
       |> Obs.map(fn(v) -> v * 3 end)

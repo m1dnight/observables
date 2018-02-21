@@ -32,6 +32,10 @@ defmodule Observables.GenObservable do
     def start(module, args, options \\ []) do
       GenServer.start(__MODULE__, {module, args}, options)
     end
+
+    def spawn_supervised(module, args) do
+      Observables.Supervisor.add_child(__MODULE__, [module, args])
+    end
     
     @doc """ 
     This function is called by the GenServer process. Here we call the init function f the module provided
