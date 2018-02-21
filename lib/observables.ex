@@ -27,10 +27,19 @@ defmodule Observables do
   def test2 do
     # Start a random GenServer
     [1,2,3, 4, 5, 6, 7, 8, 9, 10]
-    |> Obs.from_enum
+    |> Obs.from_enum(0)
     |> Obs.filter(fn(x) -> rem(x, 2) == 0 end)
     |> Obs.map(fn(v) -> v * 3 end)
     |> Obs.each(fn(v) -> Logger.debug "Got a value: #{v}" end)
     |> Obs.print
+  end
+
+  def test3 do
+    e = [1,2,3, 4, 5, 6, 7, 8, 9, 10]
+        |> Obs.from_enum(0)
+
+    e |> Obs.print
+
+    e |> Obs.print
   end
 end

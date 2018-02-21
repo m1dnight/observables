@@ -64,6 +64,18 @@ defmodule Observables.Obs do
         create_action(observable_fn, filterer)
     end
 
+    
+    def starts_with(observable_fn, start_v) do
+        action = fn(v, %{:first? => f, :prev => p}) ->
+            if f do
+                {:value, start_v, %{:first? => false, :prev => v}}
+            else
+                {:value, p, %{:first? => false, :prev => v}}
+            end
+        end
+
+        create_stateful_action(observable_fn, action, true)
+    end
 
 
 # TERMINATORS ##################################################################

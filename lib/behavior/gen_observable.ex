@@ -1,8 +1,9 @@
 defmodule Observables.GenObservable do
     require Logger
     import GenServer 
+    import Enum
     alias Observables.GenObservable
-
+    
     defstruct  observers: [], observed: [], last: [], state: %{}, module: :nil
 
     @callback init(args :: term) :: any
@@ -52,16 +53,16 @@ defmodule Observables.GenObservable do
     end
 
     
-    def handle_call({:subscribe, pid}, _from, state) do
-      {:reply, :ok, %{state | observers: [pid | state.observers]}}
+    def handle_cast({:subscribe, pid}, state) do
+      {:noreply, %{state | observers: [pid | state.observers]}}
     end
 
     
-    def handle_call({:unsubscribe, pid}, _from, state) do
+    def handle_cast({:unsubscribe, pid}, state) do
       new_subs =  state.observers
                   |> Enum.filter(fn(sub) -> sub != pid end)
     
-      {:reply, :ok, %{state | observers: new_subs}}
+      {:noreply, %{state | observers: new_subs}}
     end          
 
     
@@ -69,6 +70,19 @@ defmodule Observables.GenObservable do
       state.observers
       |> Enum.map(fn(obs) -> GenObservable.send_event(obs, value) end)  
       {:noreply, state}            
+    end
+
+    def handle_cast(:stop, state) do
+      state.observers 
+      |> Enum.map(fn(obs) -> cast(obs, {:dependency_stopping, self()}) end)
+      {:stop, :normal, state}
+    end
+
+    def handle_cast({:dependency_stopping, pid}, state) do
+      if count(state.observers) != 0 do
+        cast(self(), :stop)
+      end
+      {:noreply, state}
     end
     
 
@@ -80,8 +94,8 @@ defmodule Observables.GenObservable do
         {:novalue, s} -> 
           {:noreply, %{state | state: s}}
         {:done, s} ->
-          Logger.debug "Stopping"
-          {:stop, :normal, %{state | state: s}}
+          cast(self(), :stop)
+          {:noreply, %{state | state: s}}
       end
     end
 
@@ -90,8 +104,7 @@ defmodule Observables.GenObservable do
       {:noreply, state}
     end
 
-    def terminate(reason, _status) do
-      IO.puts "#{inspect self()} asked to stop because #{inspect reason}"
+    def terminate(_reason, _state) do
       :ok 
     end 
 
@@ -104,7 +117,7 @@ defmodule Observables.GenObservable do
     Sends a message to observee_pid that observer_pid no longer wants to be notified of events.
     """
     def subscribe(observee_pid, observer_pid) do
-      call(observee_pid, {:subscribe, observer_pid})
+      cast(observee_pid, {:subscribe, observer_pid})
     end
 
     
