@@ -81,7 +81,7 @@ defmodule Observables.GenObservable do
           {:noreply, %{state | state: s}}
         {:done, s} ->
           Logger.debug "Stopping"
-          {:stop, :normal, :done, %{state | state: s}}
+          {:stop, :normal, %{state | state: s}}
       end
     end
 
