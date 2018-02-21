@@ -15,20 +15,19 @@ defmodule Observables do
 
   def test1 do
       # Start a random GenServer
-      #{:ok, pid} = GenObservable.start_link(Observables, 0, [name: :foobar])
-      #{:ok, pid} = Observables.Supervisor.add_child(Observables, [0])
       {:ok, pid} = GenObservable.spawn_supervised(Observables, 0)
       Obs.from_pid(pid)
       |> Obs.filter(fn(x) -> rem(x, 2) == 0 end)
       |> Obs.map(fn(v) -> v * 3 end)
       |> Obs.each(fn(v) -> Logger.debug "Got a value: #{v}" end)
       |> Obs.print
+      pid # returned for debugging
   end
 
   def test2 do
     # Start a random GenServer
-    [1,2,3]
-    |> Obs.from_enum(100)
+    [1,2,3, 4, 5, 6, 7, 8, 9, 10]
+    |> Obs.from_enum
     |> Obs.filter(fn(x) -> rem(x, 2) == 0 end)
     |> Obs.map(fn(v) -> v * 3 end)
     |> Obs.each(fn(v) -> Logger.debug "Got a value: #{v}" end)

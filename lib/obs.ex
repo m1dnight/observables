@@ -64,6 +64,8 @@ defmodule Observables.Obs do
         create_action(observable_fn, filterer)
     end
 
+
+
 # TERMINATORS ##################################################################
 
     def print(observable_fn) do
@@ -77,6 +79,17 @@ defmodule Observables.Obs do
     defp create_action(observable_fn, action) do
         # Start the producer/consumer server.
         {:ok, pid} = GenObservable.start_link(Action, action)
+
+        # Creat the continuation.
+        fn(observer) ->
+            observable_fn.(pid)
+            GenObservable.subscribe(pid, observer)
+        end
+    end
+
+    defp create_stateful_action(observable_fn, action, state) do
+        # Start the producer/consumer server.
+        {:ok, pid} = GenObservable.start_link(StatefulAction, [action, state])
 
         # Creat the continuation.
         fn(observer) ->
