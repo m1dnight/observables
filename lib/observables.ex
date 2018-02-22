@@ -13,46 +13,32 @@ defmodule Observables do
       {:value, message, state}
   end
 
-  def test1 do
+  def ex_from_pid do
       # Start a random GenServer
       {:ok, pid} = GenObservable.spawn_supervised(Observables, 0)
       Obs.from_pid(pid)
-      |> Obs.filter(fn(x) -> rem(x, 2) == 0 end)
-      |> Obs.map(fn(v) -> v * 3 end)
-      |> Obs.each(fn(v) -> Logger.debug "Got a value: #{v}" end)
-      |> Obs.print
+      |> Obs.inspect
       pid # returned for debugging
   end
 
-  def test2 do
+  def ex_from_enum do
     # Start a random GenServer
     [1,2,3, 4, 5, 6, 7, 8, 9, 10]
-    |> Obs.from_enum(0)
+    |> Obs.from_enum(3000) # delay between each
     |> Obs.starts_with([-100, -99, -98, -97, -96])
-    #|> Obs.filter(fn(x) -> rem(x, 2) == 0 end)
+    |> Obs.filter(fn(x) -> rem(x, 2) == 0 end)
     |> Obs.map(fn(v) -> v * 1 end)
-    #|> Obs.each(fn(v) -> Logger.debug "Got a value: #{v}" end)
-    |> Obs.print
+    |> Obs.each(fn(v) -> Logger.debug "Got a value: #{v}" end)
   end
 
-  def test3 do
-    e = [1,2,3, 4, 5, 6, 7, 8, 9, 10]
-        |> Obs.from_enum(0)
 
-    e |> Obs.print
-
-    e |> Obs.print
-  end
-
-  def test4 do
+  def ex_merge do
     a = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     |> Obs.from_enum()
 
-    b = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
+    [10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
     |> Obs.from_enum()
-
-    a
-    |> Obs.merge(b) 
+    |> Obs.merge(a) 
     |> Obs.print
   end
 end

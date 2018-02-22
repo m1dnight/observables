@@ -39,10 +39,11 @@ defmodule Observables.Obs do
 
         {:ok, pid} = GenObservable.start_link(Action, action)
 
+        observable_fn_1.(pid)
+        observable_fn_2.(pid)
+
         # Creat the continuation.
         fn(observer) ->
-            observable_fn_1.(pid)
-            observable_fn_2.(pid)
             GenObservable.subscribe(pid, observer)
         end
     end
@@ -86,19 +87,20 @@ defmodule Observables.Obs do
         # Start the producer/consumer server.
         {:ok, pid} = GenObservable.start_link(Action, action)
 
+        # After the subscription has been made, send all the start values to the producers
+        # so he can start pushing them out to our dependees.
+        GenObservable.delay(pid, 500)
+        for v <- start_vs do
+            GenObservable.send_event(pid, v)
+        end
+
+        # Set ourselves as the dependency of pid, so he can start sending us values, too.
+        producer_fn.(pid)
+
         # Creat the continuation.
         fn(consumer) ->
             # This sets the observer as our dependency.
             GenObservable.subscribe(pid, consumer)
-
-            # After the subscription has been made, send all the start values to the producers
-            # so he can start pushing them out to our dependees.
-            for v <- start_vs do
-                GenObservable.send_event(pid, v)
-            end
-
-            # Set ourselves as the dependency of pid, so he can start sending us values, too.
-            producer_fn.(pid)
         end
     end
 
@@ -116,10 +118,11 @@ defmodule Observables.Obs do
     defp create_action(observable_fn, action) do
         # Start the producer/consumer server.
         {:ok, pid} = GenObservable.start_link(Action, action)
+        
+        observable_fn.(pid)
 
         # Creat the continuation.
         fn(observer) ->
-            observable_fn.(pid)
             GenObservable.subscribe(pid, observer)
         end
     end
