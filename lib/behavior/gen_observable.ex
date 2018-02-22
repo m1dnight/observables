@@ -130,6 +130,11 @@ defmodule Observables.GenObservable do
       end
     end
 
+    def handle_cast({:delay, delay}, state) do
+      delay(delay)
+      {:noreply, state}
+    end
+
 
     def handle_info({:event, value}, state) do
       cast(self(), {:event, value})
@@ -150,9 +155,9 @@ defmodule Observables.GenObservable do
     Sends a message to observee_pid that observer_pid needs to be notified of new events.
 
     """
-    def subscribe(observee_pid, observer_pid) do
-      cast(observee_pid, {:subscribe, observer_pid})
-      cast(observer_pid, {:subscribe_to, observee_pid})
+    def subscribe(producer, consumer) do
+      cast(producer, {:subscribe, consumer})
+      cast(consumer, {:subscribe_to, producer})
     end
 
     @doc """
@@ -171,6 +176,23 @@ defmodule Observables.GenObservable do
       cast(observee_pid, {:event, value})
     end
 
+    @doc """ 
+    Throttles the GenObservable. It will lock it up for given timeperiod such that it can not send/receive events.
+    """
+    def delay(observee_pid, delay) do
+      cast(observee_pid, {:delay, delay})
+    end
+
     
+    ###########
+    # Helpers #
+    ###########
+
+    def delay(delay) do
+      Process.send_after(self(), :delay, delay)
+      receive do
+        :delay -> :ok
+      end
+    end
 
 end

@@ -4,9 +4,9 @@ defmodule Observables.Obs do
     
 # GENERATORS ###################################################################
  
-    def from_pid(pid) do
-        fn(observer) ->
-            GenObservable.subscribe(pid, observer)
+    def from_pid(producer) do
+        fn(consumer) ->
+            GenObservable.subscribe(producer, consumer)
         end
     end
 
@@ -52,7 +52,7 @@ defmodule Observables.Obs do
         create_action(observable_fn, eacher)
     end
 
-    def filter(observable_fn, f) do
+    def filter(producer_fn, f) do
         # Creat the wrapper for the filter function.
         filterer = fn(v) ->
             if f.(v) do
@@ -61,11 +61,11 @@ defmodule Observables.Obs do
                 {:novalue}
             end
         end
-        create_action(observable_fn, filterer)
+        create_action(producer_fn, filterer)
     end
 
     
-    def starts_with(observable_fn, start_vs) do
+    def starts_with(producer_fn, start_vs) do
         action = fn(v) ->
             {:value, v}
         end
@@ -74,15 +74,17 @@ defmodule Observables.Obs do
         {:ok, pid} = GenObservable.start_link(Action, action)
 
         # Creat the continuation.
-        fn(observer) ->
-            
-            GenObservable.subscribe(pid, observer)
-            # After the subscription has been made, send all the start values to the producer.
+        fn(consumer) ->
+            # This sets the observer as our dependency.
+            GenObservable.subscribe(pid, consumer)
+
+            # After the subscription has been made, send all the start values to the producer,s
+            # so he can start pushing them out to our dependees.
             for v <- start_vs do
                 GenObservable.send_event(pid, v)
             end
-
-            observable_fn.(pid)
+            # Set ourselves as the dependency of pid, so he can start sending us values, too.
+            producer_fn.(pid)
         end
     end
 
