@@ -65,16 +65,25 @@ defmodule Observables.Obs do
     end
 
     
-    def starts_with(observable_fn, start_v) do
-        action = fn(v, %{:first? => f, :prev => p}) ->
-            if f do
-                {:value, start_v, %{:first? => false, :prev => v}}
-            else
-                {:value, p, %{:first? => false, :prev => v}}
-            end
+    def starts_with(observable_fn, start_vs) do
+        action = fn(v) ->
+            {:value, v}
         end
 
-        create_stateful_action(observable_fn, action, true)
+        # Start the producer/consumer server.
+        {:ok, pid} = GenObservable.start_link(Action, action)
+
+        # Creat the continuation.
+        fn(observer) ->
+            
+            GenObservable.subscribe(pid, observer)
+            # After the subscription has been made, send all the start values to the producer.
+            for v <- start_vs do
+                GenObservable.send_event(pid, v)
+            end
+
+            observable_fn.(pid)
+        end
     end
 
 

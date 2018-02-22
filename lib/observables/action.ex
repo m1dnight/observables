@@ -8,6 +8,8 @@ defmodule Observables.Action do
     {:ok, action}
   end
 
+  
+
   def handle_event(e, action) do
     case action.(e) do
       {:value, v} -> {:value, v, action}
