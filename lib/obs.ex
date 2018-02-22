@@ -109,7 +109,7 @@ defmodule Observables.Obs do
 
     def print(observable_fn) do
         action = fn(v) -> IO.puts(v) ; {:value, v} end
-        create_consumer(observable_fn, action)
+        map(observable_fn, action)
     end
 
 # HELPERS ######################################################################
