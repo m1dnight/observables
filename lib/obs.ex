@@ -34,6 +34,19 @@ defmodule Observables.Obs do
 
 # CONSUMER AND PRODUCER ########################################################
 
+    def merge(observable_fn_1, observable_fn_2) do
+        action = fn x -> {:value, x} end
+
+        {:ok, pid} = GenObservable.start_link(Action, action)
+
+        # Creat the continuation.
+        fn(observer) ->
+            observable_fn_1.(pid)
+            observable_fn_2.(pid)
+            GenObservable.subscribe(pid, observer)
+        end
+    end
+
     def map(observable_fn, f) do
         # Create the mapper function.
         mapper = fn(v) ->
@@ -78,11 +91,12 @@ defmodule Observables.Obs do
             # This sets the observer as our dependency.
             GenObservable.subscribe(pid, consumer)
 
-            # After the subscription has been made, send all the start values to the producer,s
+            # After the subscription has been made, send all the start values to the producers
             # so he can start pushing them out to our dependees.
             for v <- start_vs do
                 GenObservable.send_event(pid, v)
             end
+
             # Set ourselves as the dependency of pid, so he can start sending us values, too.
             producer_fn.(pid)
         end

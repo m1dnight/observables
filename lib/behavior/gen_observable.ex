@@ -194,5 +194,4 @@ defmodule Observables.GenObservable do
         :delay -> :ok
       end
     end
-
 end
