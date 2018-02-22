@@ -112,6 +112,11 @@ defmodule Observables.Obs do
         map(observable_fn, action)
     end
 
+    def inspect(observable_fn) do
+        action = fn(v) -> IO.inspect(v) ; {:value, v} end
+        map(observable_fn, action)
+    end
+
 # HELPERS ######################################################################
 
 

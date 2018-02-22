@@ -24,7 +24,7 @@ defmodule Observables do
   def ex_from_enum do
     # Start a random GenServer
     [1,2,3, 4, 5, 6, 7, 8, 9, 10]
-    |> Obs.from_enum(3000) # delay between each
+    |> Obs.from_enum(0) # delay between each
     |> Obs.starts_with([-100, -99, -98, -97, -96])
     |> Obs.filter(fn(x) -> rem(x, 2) == 0 end)
     |> Obs.map(fn(v) -> v * 1 end)
