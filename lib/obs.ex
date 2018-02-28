@@ -1,6 +1,8 @@
 defmodule Observables.Obs do
     alias Observables.{Action, StatefulAction, GenObservable}
+    alias Enum
     
+
     
 # GENERATORS ###################################################################
  
@@ -57,6 +59,19 @@ defmodule Observables.Obs do
         create_action(observable_fn, mapper)
     end
 
+    def distinct(observable_fn, f \\ fn(x, y) -> x == y end) do
+        action = fn(v, state) ->
+            seen? = Enum.any?(state, fn(seen) -> f.(v, seen) end)
+            if not seen? do
+                {:value, v, [v | state]}
+            else
+                {:novalue, state}
+            end
+        end
+
+        create_stateful_action(observable_fn, action, [])
+    end
+
     def each(observable_fn, f) do
         # Create the mapper function.
         eacher = fn(v) ->
@@ -77,6 +92,7 @@ defmodule Observables.Obs do
         end
         create_action(producer_fn, filterer)
     end
+
 
     
     def starts_with(producer_fn, start_vs) do
@@ -148,4 +164,6 @@ defmodule Observables.Obs do
         observable_fn.(pid)
         :ok
     end
+
+    
 end

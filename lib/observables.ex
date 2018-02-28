@@ -41,4 +41,12 @@ defmodule Observables do
     |> Obs.merge(a) 
     |> Obs.print
   end
+
+  def test_distinct do
+    [1, 1,2,3,1,1,2,3,4,1,2,3,3]
+    |> Obs.from_enum()
+    |> Obs.distinct()
+    |> Obs.print
+  end
+    
 end
