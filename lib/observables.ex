@@ -15,10 +15,11 @@ defmodule Observables do
 
   def ex_from_pid do
       # Start a random GenServer
-      {:ok, pid} = GenObservable.spawn_supervised(Observables, 0)
-      Obs.from_pid(pid)
+      {:ok, pid1} = GenObservable.spawn_supervised(Observables, 0)
+      Obs.from_pid(pid1)
       |> Obs.inspect
-      pid # returned for debugging
+      |> Obs.map(fn(x) -> IO.puts "Got me an :#{inspect x}" end)
+      pid1 # returned for debugging
   end
 
   def ex_from_enum do

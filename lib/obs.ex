@@ -124,12 +124,12 @@ defmodule Observables.Obs do
 # TERMINATORS ##################################################################
 
     def print(observable_fn) do
-        action = fn(v) -> IO.puts(v) ; {:value, v} end
+        action = fn(v) -> IO.puts(v) ; v end
         map(observable_fn, action)
     end
 
     def inspect(observable_fn) do
-        action = fn(v) -> IO.inspect(v) ; {:value, v} end
+        action = fn(v) -> IO.inspect(v) ; v end
         map(observable_fn, action)
     end
 

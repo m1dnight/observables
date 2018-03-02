@@ -3,6 +3,7 @@ defmodule Observables.GenObservable do
     import GenServer 
     import Enum
     alias Observables.GenObservable
+    use GenServer
     
     defstruct  observers: [], observed: [], last: [], state: %{}, module: :nil
 
