@@ -29,6 +29,14 @@ defmodule Observables.GenObservable do
     ###################
     # GenServer Stuff #
     ###################
+
+    def child_spec(arg) do
+      default = %{
+        id: __MODULE__,
+        start: {__MODULE__, :start_link, arg}
+      }
+      Supervisor.child_spec(default, [])
+    end
     
     @doc """
     This function is called when a programmer starts his module:
