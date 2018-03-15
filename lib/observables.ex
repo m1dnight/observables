@@ -25,6 +25,18 @@ defmodule Observables do
     pid1
   end
 
+  def ex_simple do
+    # Start a random GenServer
+    # delay between each
+    x = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    |> Obs.from_enum()
+
+    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    |> Obs.from_enum()
+    |> Obs.merge(x)
+    |> Obs.map(fn v -> IO.puts v end)
+  end
+
   def ex_from_enum do
     # Start a random GenServer
     # delay between each

@@ -32,14 +32,15 @@ defmodule Observables.Obs do
 
     Process.send_after(pid, {:event, :spit}, delay)
 
-    fn observer ->
+    {fn observer ->
       GenObservable.subscribe(pid, observer)
-    end
+    end,
+    pid}
   end
 
   # CONSUMER AND PRODUCER ########################################################
 
-  def merge(observable_fn_1, observable_fn_2) do
+  def merge({observable_fn_1, _parent_pid_1}, {observable_fn_2, _parent_pid_2}) do
     action = fn x -> {:value, x} end
 
     {:ok, pid} = GenObservable.start_link(Action, action)
@@ -48,12 +49,13 @@ defmodule Observables.Obs do
     observable_fn_2.(pid)
 
     # Creat the continuation.
-    fn observer ->
+    {fn observer ->
       GenObservable.subscribe(pid, observer)
-    end
+    end,
+    pid}
   end
 
-  def map(observable_fn, f) do
+  def map({observable_fn, _parent_pid}, f) do
     # Create the mapper function.
     mapper = fn v ->
       new_v = f.(v)
@@ -185,9 +187,10 @@ defmodule Observables.Obs do
     observable_fn.(pid)
 
     # Creat the continuation.
-    fn observer ->
+    {fn observer ->
       GenObservable.subscribe(pid, observer)
-    end
+    end,
+    pid}
   end
 
   defp create_stateful_action(observable_fn, action, state) do
