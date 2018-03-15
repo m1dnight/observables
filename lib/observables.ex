@@ -28,13 +28,15 @@ defmodule Observables do
   def ex_simple do
     # Start a random GenServer
     # delay between each
-    x = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-    |> Obs.from_enum()
+    x =
+      [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+      |> Obs.from_enum()
 
-    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    [1, 1, 3, 4, 5, 6, 7, 8, 9, 10]
     |> Obs.from_enum()
     |> Obs.merge(x)
-    |> Obs.map(fn v -> IO.puts v end)
+    |> Obs.distinct()
+    |> Obs.map(fn v -> IO.puts(v) end)
   end
 
   def ex_from_enum do
@@ -83,7 +85,7 @@ defmodule Observables do
     # such that it "produces a stream of observables"
     Obs.from_pid(pid1)
     |> Obs.switch()
-    |> Obs.print
+    |> Obs.print()
 
     # returned for debugging
     {pid1, x, y}

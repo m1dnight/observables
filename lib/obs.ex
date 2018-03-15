@@ -33,9 +33,8 @@ defmodule Observables.Obs do
     Process.send_after(pid, {:event, :spit}, delay)
 
     {fn observer ->
-      GenObservable.subscribe(pid, observer)
-    end,
-    pid}
+       GenObservable.subscribe(pid, observer)
+     end, pid}
   end
 
   # CONSUMER AND PRODUCER ########################################################
@@ -50,9 +49,8 @@ defmodule Observables.Obs do
 
     # Creat the continuation.
     {fn observer ->
-      GenObservable.subscribe(pid, observer)
-    end,
-    pid}
+       GenObservable.subscribe(pid, observer)
+     end, pid}
   end
 
   def map({observable_fn, _parent_pid}, f) do
@@ -65,7 +63,7 @@ defmodule Observables.Obs do
     create_action(observable_fn, mapper)
   end
 
-  def distinct(observable_fn, f \\ fn x, y -> x == y end) do
+  def distinct({observable_fn, _parent_pid}, f \\ fn x, y -> x == y end) do
     action = fn v, state ->
       seen? = Enum.any?(state, fn seen -> f.(v, seen) end)
 
@@ -130,13 +128,12 @@ defmodule Observables.Obs do
 
   def switch(producer_fn) do
     action = fn v, s ->
-
       switcher = self()
       # Unsubscribe to the previous observer we were forwarding.
 
       if s != nil do
         Logger.debug("Unsubscribing #{Kernel.inspect(self)} from #{Kernel.inspect(s)}")
-        #GenObservable.unsubscribe(s, self())
+        # GenObservable.unsubscribe(s, self())
       end
 
       # We subscribe to this observable.
@@ -188,9 +185,8 @@ defmodule Observables.Obs do
 
     # Creat the continuation.
     {fn observer ->
-      GenObservable.subscribe(pid, observer)
-    end,
-    pid}
+       GenObservable.subscribe(pid, observer)
+     end, pid}
   end
 
   defp create_stateful_action(observable_fn, action, state) do
@@ -198,10 +194,11 @@ defmodule Observables.Obs do
     {:ok, pid} = GenObservable.start_link(StatefulAction, [action, state])
 
     # Creat the continuation.
-    fn observer ->
+    {fn observer ->
       observable_fn.(pid)
       GenObservable.subscribe(pid, observer)
-    end
+    end,
+    pid}
   end
 
   defp create_consumer(observable_fn, action) do
