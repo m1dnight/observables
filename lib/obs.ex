@@ -77,7 +77,7 @@ defmodule Observables.Obs do
     create_stateful_action(observable_fn, action, [])
   end
 
-  def each(observable_fn, f) do
+  def each({observable_fn, _parent_pid}, f) do
     # Create the mapper function.
     eacher = fn v ->
       f.(v)
@@ -87,7 +87,7 @@ defmodule Observables.Obs do
     create_action(observable_fn, eacher)
   end
 
-  def filter(producer_fn, f) do
+  def filter({producer_fn, _parent_pid}, f) do
     # Creat the wrapper for the filter function.
     filterer = fn v ->
       if f.(v) do

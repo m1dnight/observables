@@ -36,6 +36,7 @@ defmodule Observables do
     |> Obs.from_enum()
     |> Obs.merge(x)
     |> Obs.distinct()
+    |> Obs.filter(fn(x) -> x > 4 end)
     |> Obs.map(fn v -> IO.puts(v) end)
   end
 
