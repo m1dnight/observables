@@ -47,7 +47,6 @@ defmodule Observables do
     [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     |> Obs.from_enum(0)
     |> Obs.starts_with([-100, -99, -98, -97, -96])
-    |> Obs.filter(fn x -> rem(x, 2) == 0 end)
     |> Obs.map(fn v -> v * 1 end)
     |> Obs.each(fn v -> Logger.debug("Got a value: #{v}") end)
   end

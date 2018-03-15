@@ -7,9 +7,10 @@ defmodule Observables.Obs do
   # GENERATORS ###################################################################
 
   def from_pid(producer) do
-    fn consumer ->
+    {fn consumer ->
       GenObservable.subscribe(producer, consumer)
-    end
+    end,
+    producer}
   end
 
   @doc """
@@ -126,14 +127,15 @@ defmodule Observables.Obs do
     end, pid}
   end
 
-  def switch(observable_fn) do
+  def switch({observable_fn, _parent_pid}) do
     action = fn v, s ->
       switcher = self()
       # Unsubscribe to the previous observer we were forwarding.
 
       if s != nil do
-        Logger.debug("Unsubscribing #{Kernel.inspect(self)} from #{Kernel.inspect(s)}")
-        # GenObservable.unsubscribe(s, self())
+        {_obsv, pid} = s
+        Logger.debug("Unsubscribing #{Kernel.inspect(self())} from #{Kernel.inspect(pid)}")
+        GenObservable.unsubscribe(pid, self())
       end
 
       # We subscribe to this observable.
@@ -149,30 +151,31 @@ defmodule Observables.Obs do
     {:ok, pid} = GenObservable.start_link(Switch, [action, nil])
 
     # Creat the continuation.
-    fn observer ->
+    {fn observer ->
       observable_fn.(pid)
       GenObservable.subscribe(pid, observer)
-    end
+    end,
+    pid}
   end
 
   # TERMINATORS ##################################################################
 
-  def print(observable_fn) do
+  def print({observable_fn, parent_pid}) do
     action = fn v ->
       IO.puts(v)
       v
     end
 
-    map(observable_fn, action)
+    map({observable_fn, parent_pid}, action)
   end
 
-  def inspect(observable_fn) do
+  def inspect({observable_fn, parent_pid}) do
     action = fn v ->
       IO.inspect(v)
       v
     end
 
-    map(observable_fn, action)
+    map({observable_fn, parent_pid}, action)
   end
 
   # HELPERS ######################################################################
@@ -199,11 +202,5 @@ defmodule Observables.Obs do
       GenObservable.subscribe(pid, observer)
     end,
     pid}
-  end
-
-  defp create_consumer(observable_fn, action) do
-    {:ok, pid} = GenObservable.start_link(Action, action)
-    observable_fn.(pid)
-    :ok
   end
 end
