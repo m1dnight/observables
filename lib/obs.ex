@@ -1,6 +1,8 @@
 defmodule Observables.Obs do
-  alias Observables.{Action, StatefulAction, GenObservable}
+  alias Observables.{Action, StatefulAction, Switch, GenObservable}
   alias Enum
+  require Logger
+  alias Logger
 
   # GENERATORS ###################################################################
 
@@ -121,6 +123,36 @@ defmodule Observables.Obs do
     fn consumer ->
       # This sets the observer as our dependency.
       GenObservable.subscribe(pid, consumer)
+    end
+  end
+
+  def switch(producer_fn) do
+    action = fn v, s ->
+
+      switcher = self()
+      # Unsubscribe to the previous observer we were forwarding.
+
+      if s != nil do
+        Logger.debug("Unsubscribing #{Kernel.inspect(self)} from #{Kernel.inspect(s)}")
+        #GenObservable.unsubscribe(s, self())
+      end
+
+      # We subscribe to this observable.
+      v
+      |> map(fn v ->
+        GenObservable.send_event(switcher, {:forward, v})
+      end)
+
+      {:novalue, v}
+    end
+
+    # Start the producer/consumer server.
+    {:ok, pid} = GenObservable.start_link(Switch, [action, nil])
+
+    # Creat the continuation.
+    fn observer ->
+      producer_fn.(pid)
+      GenObservable.subscribe(pid, observer)
     end
   end
 

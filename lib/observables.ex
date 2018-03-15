@@ -53,4 +53,27 @@ defmodule Observables do
     |> Obs.distinct()
     |> Obs.print()
   end
+
+  def test_switch do
+    {:ok, pid1} = GenObservable.spawn_supervised(Observables, 0)
+
+    x =
+      1..100
+      |> Enum.to_list()
+      |> Obs.from_enum()
+
+    y =
+      100..1000
+      |> Enum.to_list()
+      |> Obs.from_enum()
+
+    # We will send observables to this observable
+    # such that it "produces a stream of observables"
+    Obs.from_pid(pid1)
+    |> Obs.switch()
+    |> Obs.print
+
+    # returned for debugging
+    {pid1, x, y}
+  end
 end
