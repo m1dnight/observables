@@ -37,6 +37,7 @@ defmodule Observables do
     |> Obs.merge(x)
     |> Obs.distinct()
     |> Obs.filter(fn(x) -> x > 4 end)
+    |> Obs.starts_with([1,2,3])
     |> Obs.map(fn v -> IO.puts(v) end)
   end
 

@@ -87,7 +87,7 @@ defmodule Observables.Obs do
     create_action(observable_fn, eacher)
   end
 
-  def filter({producer_fn, _parent_pid}, f) do
+  def filter({observable_fn, _parent_pid}, f) do
     # Creat the wrapper for the filter function.
     filterer = fn v ->
       if f.(v) do
@@ -97,10 +97,10 @@ defmodule Observables.Obs do
       end
     end
 
-    create_action(producer_fn, filterer)
+    create_action(observable_fn, filterer)
   end
 
-  def starts_with(producer_fn, start_vs) do
+  def starts_with({observable_fn, _parent_pid}, start_vs) do
     action = fn v ->
       {:value, v}
     end
@@ -117,16 +117,16 @@ defmodule Observables.Obs do
     end
 
     # Set ourselves as the dependency of pid, so he can start sending us values, too.
-    producer_fn.(pid)
+    observable_fn.(pid)
 
     # Creat the continuation.
-    fn consumer ->
+    {fn consumer ->
       # This sets the observer as our dependency.
       GenObservable.subscribe(pid, consumer)
-    end
+    end, pid}
   end
 
-  def switch(producer_fn) do
+  def switch(observable_fn) do
     action = fn v, s ->
       switcher = self()
       # Unsubscribe to the previous observer we were forwarding.
@@ -150,7 +150,7 @@ defmodule Observables.Obs do
 
     # Creat the continuation.
     fn observer ->
-      producer_fn.(pid)
+      observable_fn.(pid)
       GenObservable.subscribe(pid, observer)
     end
   end
