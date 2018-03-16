@@ -127,30 +127,35 @@ defmodule Observables.Obs do
   end
 
   def switch({observable_fn, _parent_pid}) do
-    action = fn observable, s ->
-      Logger.debug(
-        "Switching action fired: Will now stop forwarding #{Kernel.inspect(s)}, and start forwarding #{
-          Kernel.inspect(observable)
-        }"
-      )
+
+    action = fn new_obs, s ->
+      switcher = self()
 
       # Unsubscribe to the previous observer we were forwarding.
-
       if s != nil do
-        {_obsv, pid} = s
-        Logger.debug("Unsubscribing #{Kernel.inspect(self())} from #{Kernel.inspect(pid)}")
-        GenObservable.stop_send_to(pid, self())
+        {:forwarder, forwarder, :sender, observable} = s
+        {_f, pidf} = forwarder
+        GenObservable.stop_send_to(pidf, self())
+        {_f, pids} = observable
+        GenObservable.stop_send_to(pids, pidf)
       end
 
       # We subscribe to this observable.
-      {_, obsvpid} = observable
-      GenObservable.send_to(obsvpid, self())
+      # {_, obsvpid} = observable
+      # GenObservable.send_to(obsvpid, self())
 
-      {:novalue, observable}
+      forwarder =
+        new_obs
+        |> map(fn v -> GenObservable.send_event(switcher, {:forward, v}) end)
+
+      Logger.debug "The forwarder (map) for #{Kernel.inspect switcher} is #{Kernel.inspect forwarder}"
+
+      {:novalue, {:forwarder, forwarder, :sender, new_obs}}
     end
 
     # Start the producer/consumer server.
     {:ok, pid} = GenObservable.start_link(Switch, [action, nil])
+
     observable_fn.(pid)
 
     # Creat the continuation.
@@ -197,9 +202,11 @@ defmodule Observables.Obs do
     # Start the producer/consumer server.
     {:ok, pid} = GenObservable.start_link(StatefulAction, [action, state])
 
+    observable_fn.(pid)
+
     # Creat the continuation.
     {fn observer ->
-       observable_fn.(pid)
+
        GenObservable.send_to(pid, observer)
      end, pid}
   end
