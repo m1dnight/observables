@@ -70,41 +70,25 @@ defmodule Observables.GenObservable do
   end
 
   def handle_cast({:send_to, pid}, state) do
-    Logger.warn "#{inspect self()} will send values to #{inspect pid}"
     {:noreply, %{state | listeners: [pid | state.listeners]}}
   end
 
   def handle_cast({:listen_to, pid}, state) do
-    Logger.warn "#{inspect self()} will receive values from #{inspect pid}"
     {:noreply, %{state | listeningto: [pid | state.listeningto]}}
   end
 
   def handle_cast({:stop_sending_to, pid}, state) do
-    Logger.error "#{inspect self()} will no longer send values to #{inspect pid}"
-    Logger.warn """
-    #{inspect state.listeners}
-    """
     new_subs =
       state.listeners
       |> Enum.filter(fn sub -> sub != pid end)
 
-    Logger.warn """
-    removed: #{inspect new_subs}
-    """
     {:noreply, %{state | listeners: new_subs}}
   end
 
   def handle_cast({:stop_listening_to, pid}, state) do
-    Logger.error "#{inspect self()} will no longer listen to #{inspect pid}"
-    Logger.warn """
-    #{inspect state.listeningto}
-    """
     new_subs =
       state.listeningto
       |> Enum.filter(fn sub -> sub != pid end)
-    Logger.warn """
-    removed: #{inspect new_subs}
-    """
     {:noreply, %{state | listeningto: new_subs}}
   end
 
@@ -116,7 +100,6 @@ defmodule Observables.GenObservable do
   end
 
   def handle_cast(:stop, state) do
-    Logger.debug("#{inspect(self())} - stopping")
 
     state.listeners
     |> Enum.map(fn obs -> cast(obs, {:dependency_stopping, self()}) end)
@@ -125,7 +108,6 @@ defmodule Observables.GenObservable do
   end
 
   def handle_cast({:dependency_stopping, pid}, state) do
-    Logger.debug("#{inspect(self())} - dependency #{inspect(pid)} stopping")
     state.module.handle_done(pid, state.state)
     # Remove observee.
     new_subs =
@@ -133,7 +115,6 @@ defmodule Observables.GenObservable do
       |> Enum.filter(fn sub -> sub != pid end)
 
     if count(new_subs) == 0 do
-      Logger.debug("#{inspect(self())} - Listening to nobody anymore, going offline.")
       cast(self(), :stop)
     end
 

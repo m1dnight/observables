@@ -17,7 +17,6 @@ defmodule Observables.StatefulAction do
   end
 
   def handle_done(pid, state) do
-    Logger.debug("#{inspect(self())} - #{inspect(pid)} is done")
     {:ok, state}
   end
 end

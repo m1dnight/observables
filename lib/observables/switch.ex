@@ -9,7 +9,6 @@ defmodule Observables.Switch do
   end
 
   def handle_event({:forward, v}, state) do
-    Logger.debug "Forwarding: #{inspect v}"
     {:value, v, state}
   end
 
@@ -23,7 +22,6 @@ defmodule Observables.Switch do
   end
 
   def handle_done(pid, state) do
-    Logger.debug("#{inspect(self())} - #{inspect(pid)} is done")
     {:ok, state}
   end
 end

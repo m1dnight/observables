@@ -148,8 +148,6 @@ defmodule Observables.Obs do
         new_obs
         |> map(fn v -> GenObservable.send_event(switcher, {:forward, v}) end)
 
-      Logger.debug "The forwarder (map) for #{Kernel.inspect switcher} is #{Kernel.inspect forwarder}"
-
       {:novalue, {:forwarder, forwarder, :sender, new_obs}}
     end
 
