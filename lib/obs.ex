@@ -8,7 +8,7 @@ defmodule Observables.Obs do
 
   def from_pid(producer) do
     {fn consumer ->
-      GenObservable.subscribe(producer, consumer)
+      GenObservable.send_to(producer, consumer)
     end,
     producer}
   end
@@ -34,7 +34,7 @@ defmodule Observables.Obs do
     Process.send_after(pid, {:event, :spit}, delay)
 
     {fn observer ->
-       GenObservable.subscribe(pid, observer)
+       GenObservable.send_to(pid, observer)
      end, pid}
   end
 
@@ -50,7 +50,7 @@ defmodule Observables.Obs do
 
     # Creat the continuation.
     {fn observer ->
-       GenObservable.subscribe(pid, observer)
+       GenObservable.send_to(pid, observer)
      end, pid}
   end
 
@@ -123,28 +123,28 @@ defmodule Observables.Obs do
     # Creat the continuation.
     {fn consumer ->
       # This sets the observer as our dependency.
-      GenObservable.subscribe(pid, consumer)
+      GenObservable.send_to(pid, consumer)
     end, pid}
   end
 
   def switch({observable_fn, _parent_pid}) do
-    action = fn v, s ->
+    action = fn observable, s ->
       switcher = self()
       # Unsubscribe to the previous observer we were forwarding.
 
       if s != nil do
         {_obsv, pid} = s
         Logger.debug("Unsubscribing #{Kernel.inspect(self())} from #{Kernel.inspect(pid)}")
-        GenObservable.unsubscribe(pid, self())
+        GenObservable.stop_send_to(pid, self())
       end
 
       # We subscribe to this observable.
-      v
+      observable
       |> map(fn v ->
         GenObservable.send_event(switcher, {:forward, v})
       end)
 
-      {:novalue, v}
+      {:novalue, observable}
     end
 
     # Start the producer/consumer server.
@@ -153,7 +153,7 @@ defmodule Observables.Obs do
     # Creat the continuation.
     {fn observer ->
       observable_fn.(pid)
-      GenObservable.subscribe(pid, observer)
+      GenObservable.send_to(pid, observer)
     end,
     pid}
   end
@@ -188,7 +188,7 @@ defmodule Observables.Obs do
 
     # Creat the continuation.
     {fn observer ->
-       GenObservable.subscribe(pid, observer)
+       GenObservable.send_to(pid, observer)
      end, pid}
   end
 
@@ -199,7 +199,7 @@ defmodule Observables.Obs do
     # Creat the continuation.
     {fn observer ->
       observable_fn.(pid)
-      GenObservable.subscribe(pid, observer)
+      GenObservable.send_to(pid, observer)
     end,
     pid}
   end

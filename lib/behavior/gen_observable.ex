@@ -5,7 +5,7 @@ defmodule Observables.GenObservable do
   alias Observables.GenObservable
   use GenServer
 
-  defstruct observers: [], observed: [], last: [], state: %{}, module: nil
+  defstruct listeners: [], listeningto: [], last: [], state: %{}, module: nil
 
   @callback init(args :: term) :: any
 
@@ -69,32 +69,42 @@ defmodule Observables.GenObservable do
     end
   end
 
-  def handle_cast({:subscribe, pid}, state) do
-    {:noreply, %{state | observers: [pid | state.observers]}}
+  def handle_cast({:send_to, pid}, state) do
+    {:noreply, %{state | listeners: [pid | state.listeners]}}
   end
 
-  def handle_cast({:subscribe_to, pid}, state) do
-    {:noreply, %{state | observed: [pid | state.observed]}}
+  def handle_cast({:listen_to, pid}, state) do
+    {:noreply, %{state | listeningto: [pid | state.listeningto]}}
   end
 
-  def handle_cast({:unsubscribe, pid}, state) do
+  def handle_cast({:stop_sending_to, pid}, state) do
+    Logger.warn """
+    #{Kernel.inspect self()} will no longer send values to #{Kernel.inspect pid}
+    #{inspect state.listeners}
+    """
     new_subs =
-      state.observers
+      state.listeners
       |> Enum.filter(fn sub -> sub != pid end)
 
-    {:noreply, %{state | observers: new_subs}}
+    Logger.warn """
+    Done
+    #{inspect new_subs}
+    """
+
+    {:noreply, %{state | listeners: new_subs}}
   end
 
-  def handle_cast({:unsubscribe_to, pid}, state) do
+  def handle_cast({:stop_listening_to, pid}, state) do
+    Logger.warn "#{Kernel.inspect self()} unsubcribed to #{Kernel.inspect pid}"
     new_subs =
-      state.observed
+      state.listeningto
       |> Enum.filter(fn sub -> sub != pid end)
 
-    {:noreply, %{state | observed: new_subs}}
+    {:noreply, %{state | listeningto: new_subs}}
   end
 
   def handle_cast({:notify_all, value}, state) do
-    state.observers
+    state.listeners
     |> Enum.map(fn obs -> GenObservable.send_event(obs, value) end)
 
     {:noreply, state}
@@ -103,7 +113,7 @@ defmodule Observables.GenObservable do
   def handle_cast(:stop, state) do
     Logger.debug("#{inspect(self())} - stopping")
 
-    state.observers
+    state.listeners
     |> Enum.map(fn obs -> cast(obs, {:dependency_stopping, self()}) end)
 
     {:stop, :normal, state}
@@ -114,7 +124,7 @@ defmodule Observables.GenObservable do
     state.module.handle_done(pid, state.state)
     # Remove observee.
     new_subs =
-      state.observed
+      state.listeningto
       |> Enum.filter(fn sub -> sub != pid end)
 
     if count(new_subs) == 0 do
@@ -122,7 +132,7 @@ defmodule Observables.GenObservable do
       cast(self(), :stop)
     end
 
-    {:noreply, %{state | observed: new_subs}}
+    {:noreply, %{state | listeningto: new_subs}}
   end
 
   def handle_cast({:event, value}, state) do
@@ -162,32 +172,32 @@ defmodule Observables.GenObservable do
   Sends a message to observee_pid that observer_pid needs to be notified of new events.
 
   """
-  def subscribe(producer, consumer) do
-    cast(producer, {:subscribe, consumer})
-    cast(consumer, {:subscribe_to, producer})
+  def send_to(producer, consumer) do
+    cast(producer, {:send_to, consumer})
+    cast(consumer, {:listen_to, producer})
   end
 
   @doc """
   Sends a message to observee_pid that observer_pid no longer wants to be notified of events.
   """
-  def unsubscribe(observee_pid, observer_pid) do
-    cast(observee_pid, {:unsubscribe, observer_pid})
-    cast(observer_pid, {:ubsubscribe_to, observee_pid})
+  def stop_send_to(producer, consumer) do
+    cast(producer, {:stop_sending_to, consumer})
+    cast(consumer, {:stop_listening_to, producer})
   end
 
   @doc """
-  Sends a new_value message to this GenObservable, such that it procudes a new value 
+  Sends a new_value message to this GenObservable, such that it procudes a new value
   for its dependees.
   """
-  def send_event(observee_pid, value) do
-    cast(observee_pid, {:event, value})
+  def send_event(consumer, value) do
+    cast(consumer, {:event, value})
   end
 
   @doc """
   Throttles the GenObservable. It will lock it up for given timeperiod such that it can not send/receive events.
   """
-  def delay(observee_pid, delay) do
-    cast(observee_pid, {:delay, delay})
+  def delay(producer, delay) do
+    cast(producer, {:delay, delay})
   end
 
   ###########
