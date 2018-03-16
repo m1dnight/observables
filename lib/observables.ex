@@ -13,33 +13,6 @@ defmodule Observables do
     {:value, message, state}
   end
 
-  def ex_from_enum do
-    # Start a random GenServer
-    # delay between each
-    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-    |> Obs.from_enum(5)
-    |> Obs.starts_with([-100, -99, -98, -97, -96])
-    |> Obs.map(fn v -> v * 1 end)
-    |> Obs.each(fn v -> IO.puts("Got a value: #{v}") end)
-  end
-
-  def ex_merge do
-    a =
-      [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-      |> Obs.from_enum()
-
-    [10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
-    |> Obs.from_enum()
-    |> Obs.merge(a)
-    |> Obs.print()
-  end
-
-  def test_distinct do
-    [1, 1, 2, 3, 1, 1, 2, 3, 4, 1, 2, 3, 3]
-    |> Obs.from_enum()
-    |> Obs.distinct()
-    |> Obs.print()
-  end
 
   def test_switch do
     {:ok, pid1} = GenObservable.spawn_supervised(Observables, 0)

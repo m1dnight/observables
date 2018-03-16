@@ -1,6 +1,17 @@
 defmodule ObservablesTest do
   use ExUnit.Case
   alias Observables.{Obs, GenObservable}
+  require Logger
+
+  def sleep(ms) do
+    Logger.debug "Sleeping for #{ms}"
+    receive do
+      :nevergonnahappen -> :ok
+    after
+      ms -> Logger.debug "Woken up"
+    end
+
+  end
 
   doctest Observables
 
@@ -127,6 +138,41 @@ defmodule ObservablesTest do
     |> Enum.map(fn x ->
       receive do
         ^x -> :ok
+      end
+    end)
+
+    assert 5 == 5
+  end
+
+  test "switch" do
+    testproc = self()
+
+    {:ok, pid} = GenObservable.spawn_supervised(Observables, 0)
+
+    Obs.from_pid(pid)
+    |> Obs.switch()
+    |> Obs.map(fn v -> send(testproc, v) end)
+
+    x =
+      1..5
+      |> Enum.to_list()
+      |> Obs.from_enum()
+
+    Logger.debug "Setting new observable x"
+    GenObservable.send_event(pid, x)
+    sleep(10000)
+
+    y =
+      6..10
+      |> Enum.to_list()
+      |> Obs.from_enum()
+      Logger.debug "Setting new observable y"
+    GenObservable.send_event(pid, y)
+
+    1..10
+    |> Enum.map(fn x ->
+      receive do
+        v -> Logger.debug "Got #{v}"
       end
     end)
 
