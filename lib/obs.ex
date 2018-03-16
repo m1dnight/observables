@@ -8,9 +8,8 @@ defmodule Observables.Obs do
 
   def from_pid(producer) do
     {fn consumer ->
-      GenObservable.send_to(producer, consumer)
-    end,
-    producer}
+       GenObservable.send_to(producer, consumer)
+     end, producer}
   end
 
   @doc """
@@ -122,14 +121,19 @@ defmodule Observables.Obs do
 
     # Creat the continuation.
     {fn consumer ->
-      # This sets the observer as our dependency.
-      GenObservable.send_to(pid, consumer)
-    end, pid}
+       # This sets the observer as our dependency.
+       GenObservable.send_to(pid, consumer)
+     end, pid}
   end
 
   def switch({observable_fn, _parent_pid}) do
     action = fn observable, s ->
-      switcher = self()
+      Logger.debug(
+        "Switching action fired: Will now stop forwarding #{Kernel.inspect(s)}, and start forwarding #{
+          Kernel.inspect(observable)
+        }"
+      )
+
       # Unsubscribe to the previous observer we were forwarding.
 
       if s != nil do
@@ -139,23 +143,20 @@ defmodule Observables.Obs do
       end
 
       # We subscribe to this observable.
-      observable
-      |> map(fn v ->
-        GenObservable.send_event(switcher, {:forward, v})
-      end)
+      {_, obsvpid} = observable
+      GenObservable.send_to(obsvpid, self())
 
       {:novalue, observable}
     end
 
     # Start the producer/consumer server.
     {:ok, pid} = GenObservable.start_link(Switch, [action, nil])
+    observable_fn.(pid)
 
     # Creat the continuation.
     {fn observer ->
-      observable_fn.(pid)
-      GenObservable.send_to(pid, observer)
-    end,
-    pid}
+       GenObservable.send_to(pid, observer)
+     end, pid}
   end
 
   # TERMINATORS ##################################################################
@@ -198,9 +199,8 @@ defmodule Observables.Obs do
 
     # Creat the continuation.
     {fn observer ->
-      observable_fn.(pid)
-      GenObservable.send_to(pid, observer)
-    end,
-    pid}
+       observable_fn.(pid)
+       GenObservable.send_to(pid, observer)
+     end, pid}
   end
 end

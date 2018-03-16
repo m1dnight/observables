@@ -70,16 +70,18 @@ defmodule Observables.GenObservable do
   end
 
   def handle_cast({:send_to, pid}, state) do
+    Logger.warn "#{inspect self()} will send values to #{inspect pid}"
     {:noreply, %{state | listeners: [pid | state.listeners]}}
   end
 
   def handle_cast({:listen_to, pid}, state) do
+    Logger.warn "#{inspect self()} will receive values from #{inspect pid}"
     {:noreply, %{state | listeningto: [pid | state.listeningto]}}
   end
 
   def handle_cast({:stop_sending_to, pid}, state) do
+    Logger.error "#{inspect self()} will no longer send values to #{inspect pid}"
     Logger.warn """
-    #{Kernel.inspect self()} will no longer send values to #{Kernel.inspect pid}
     #{inspect state.listeners}
     """
     new_subs =
@@ -87,19 +89,22 @@ defmodule Observables.GenObservable do
       |> Enum.filter(fn sub -> sub != pid end)
 
     Logger.warn """
-    Done
-    #{inspect new_subs}
+    removed: #{inspect new_subs}
     """
-
     {:noreply, %{state | listeners: new_subs}}
   end
 
   def handle_cast({:stop_listening_to, pid}, state) do
-    Logger.warn "#{Kernel.inspect self()} unsubcribed to #{Kernel.inspect pid}"
+    Logger.error "#{inspect self()} will no longer listen to #{inspect pid}"
+    Logger.warn """
+    #{inspect state.listeningto}
+    """
     new_subs =
       state.listeningto
       |> Enum.filter(fn sub -> sub != pid end)
-
+    Logger.warn """
+    removed: #{inspect new_subs}
+    """
     {:noreply, %{state | listeningto: new_subs}}
   end
 
