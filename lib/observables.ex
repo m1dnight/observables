@@ -13,34 +13,6 @@ defmodule Observables do
     {:value, message, state}
   end
 
-  def ex_from_pid do
-    # Start a random GenServer
-    {:ok, pid1} = GenObservable.spawn_supervised(Observables, 0)
-
-    Obs.from_pid(pid1)
-    |> Obs.inspect()
-    |> Obs.map(fn x -> IO.puts("Got me an :#{inspect(x)}") end)
-
-    # returned for debugging
-    pid1
-  end
-
-  def ex_simple do
-    # Start a random GenServer
-    # delay between each
-    x =
-      [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-      |> Obs.from_enum()
-
-    [1, 1, 3, 4, 5, 6, 7, 8, 9, 10]
-    |> Obs.from_enum()
-    |> Obs.merge(x)
-    |> Obs.distinct()
-    |> Obs.filter(fn(x) -> x > 4 end)
-    |> Obs.starts_with([1,2,3])
-    |> Obs.map(fn v -> IO.puts(v) end)
-  end
-
   def ex_from_enum do
     # Start a random GenServer
     # delay between each

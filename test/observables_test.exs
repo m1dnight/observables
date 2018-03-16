@@ -111,4 +111,25 @@ defmodule ObservablesTest do
 
     assert 5 == 5
   end
+
+  test "Starts with" do
+    testproc = self()
+
+    first = [0]
+    xs = [1, 2, 3]
+
+    xs
+    |> Obs.from_enum(100)
+    |> Obs.starts_with(first)
+    |> Obs.map(fn v -> send(testproc, v) end)
+
+    (xs ++ first)
+    |> Enum.map(fn x ->
+      receive do
+        ^x -> :ok
+      end
+    end)
+
+    assert 5 == 5
+  end
 end
