@@ -101,6 +101,7 @@ defmodule Observables.GenObservable do
   end
 
   def handle_cast(:stop, state) do
+    Logger.warn "#{inspect self()} stopping"
     state.listeners
     |> Enum.map(fn obs -> cast(obs, {:dependency_stopping, self()}) end)
 
@@ -115,6 +116,7 @@ defmodule Observables.GenObservable do
       |> Enum.filter(fn sub -> sub != pid end)
 
     if count(new_subs) == 0 do
+      Logger.warn "#{inspect self()} all dependencies done, stopping ourselves."
       cast(self(), :stop)
     end
 

@@ -20,6 +20,7 @@ defmodule Observables.StatefulAction do
         {:buffer, v, %{:state => new_s, :action => a}}
 
       {:done, new_s} ->
+        Logger.debug "done"
         {:done, new_s}
     end
   end
