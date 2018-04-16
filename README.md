@@ -1,6 +1,8 @@
 # Observables
 
-**TODO: Add description**
+An implementation of Reactive Extensions in Elixir.
+
+The library is a work in progress and I'm only implementing what I need.
 
 ## Installation
 
@@ -15,7 +17,6 @@ def deps do
 end
 ```
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/observables](https://hexdocs.pm/observables).
+## TODO
 
+ - A `zip` observable should stop as soon as one of both observables stops *and* the buffer has been consumed. 
