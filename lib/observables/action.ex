@@ -10,8 +10,11 @@ defmodule Observables.Action do
 
   def handle_event(e, action) do
     case action.(e) do
-      {:value, v} -> {:value, v, action}
-      {:novalue} -> {:novalue, action}
+      {:value, v} ->
+        {:value, v, action}
+
+      {:novalue} ->
+        {:novalue, action}
     end
   end
 end

@@ -67,15 +67,63 @@ defmodule Observables.Obs do
 
   def zip(l = {observable_fn_1, _parent_pid_1}, r = {observable_fn_2, _parent_pid_2}) do
     # We tag each value from left and right with their respective label.
-    left =
+    {f_l, pid_l} =
       l
       |> map(fn v -> {:left, v} end)
 
-    right =
+    {f_r, pid_r} =
       r
       |> map(fn v -> {:right, v} end)
 
+    # We create a new stateful action that will only accept one value from the left, and one from the right.
+    # It will buffer all intermediate values.
+    action = fn value, state ->
+      case {value, state} do
+        # No values at all, and got a left.
+        {{:left, vl}, {:left, [], :right, []}} ->
+          {:novalue, {:left, [vl], :right, []}}
 
+        # No values yet, and got a right.
+        {{:right, vr}, {:left, [], :right, []}} ->
+          {:novalue, {:left, [], :right, [vr]}}
+
+        # Already have left, now got right.
+        {{:right, vr}, {:left, [vl | vls], :right, []}} ->
+          {:value, {vl, vr}, {:left, vls, :right, []}}
+
+        # Already have a right value, and now received left.
+        {{:left, vl}, {:left, [], :right, [vr | vrs]}} ->
+          {:value, {vl, vr}, {:left, [], :right, vrs}}
+
+        # Already have a left, and received a left.
+        {{:left, vln}, {:left, vls, :right, []}} ->
+          {:novalue, {:left, vls ++ [vln], :right, []}}
+
+        # Already have a right, and received a right.
+        {{:right, vr}, {:left, [], :right, vrs}} ->
+          {:novalue, {:left, [], :right, vrs ++ [vr]}}
+
+        # Have left and right, and received a right.
+        {{:right, vrn}, {:left, [vl | vls], :right, [vr | vrs]}} ->
+          {:value, {vl, vr}, {:left, vls, right: vrs ++ [vrn]}}
+
+        # Have left and right, and received a left.
+        {{:left, vln}, {:left, [vl | vls], :right, [vr | vrs]}} ->
+          {:value, {vl, vr}, {:left, vls ++ [vln], right: vrs}}
+      end
+    end
+
+    # Start our zipper observable.
+    {:ok, pid} = GenObservable.start(StatefulAction, [action, {:left, [], :right, []}])
+
+    # Make left and right send to us.
+    f_l.(pid)
+    f_r.(pid)
+
+    # Creat the continuation.
+    {fn observer ->
+       GenObservable.send_to(pid, observer)
+     end, pid}
   end
 
   def merge({observable_fn_1, _parent_pid_1}, {observable_fn_2, _parent_pid_2}) do

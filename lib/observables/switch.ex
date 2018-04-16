@@ -14,14 +14,21 @@ defmodule Observables.Switch do
 
   def handle_event(e, %{:state => s, :action => a}) do
     case a.(e, s) do
-      {:value, v, new_s} -> {:value, v, %{:state => new_s, :action => a}}
-      {:novalue, new_s} -> {:novalue, %{:state => new_s, :action => a}}
-      {:done, new_s} -> {:done, new_s}
-      _ -> Logger.error("Invalid return value from Observable action!")
+      {:value, v, new_s} ->
+        {:value, v, %{:state => new_s, :action => a}}
+
+      {:novalue, new_s} ->
+        {:novalue, %{:state => new_s, :action => a}}
+
+      {:done, new_s} ->
+        {:done, new_s}
+
+      _ ->
+        Logger.error("Invalid return value from Observable action!")
     end
   end
 
-  def handle_done(pid, state) do
+  def handle_done(_pid, state) do
     {:ok, state}
   end
 end

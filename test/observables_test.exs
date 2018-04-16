@@ -178,4 +178,5 @@ defmodule ObservablesTest do
 
     assert 5 == 5
   end
+
 end

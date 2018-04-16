@@ -130,6 +130,10 @@ defmodule Observables.GenObservable do
       {:novalue, s} ->
         {:noreply, %{state | state: s}}
 
+      {:buffer, value, s} ->
+        GenServer.cast(self(), {:event, value})
+        {:noreply, %{state | state: s}}
+
       {:done, s} ->
         cast(self(), :stop)
         {:noreply, %{state | state: s}}
