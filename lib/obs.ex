@@ -65,6 +65,19 @@ defmodule Observables.Obs do
 
   # CONSUMER AND PRODUCER ########################################################
 
+  def zip(l = {observable_fn_1, _parent_pid_1}, r = {observable_fn_2, _parent_pid_2}) do
+    # We tag each value from left and right with their respective label.
+    left =
+      l
+      |> map(fn v -> {:left, v} end)
+
+    right =
+      r
+      |> map(fn v -> {:right, v} end)
+
+
+  end
+
   def merge({observable_fn_1, _parent_pid_1}, {observable_fn_2, _parent_pid_2}) do
     action = fn x -> {:value, x} end
 
