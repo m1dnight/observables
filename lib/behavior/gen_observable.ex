@@ -89,6 +89,7 @@ defmodule Observables.GenObservable do
     new_subs =
       state.listeningto
       |> Enum.filter(fn sub -> sub != pid end)
+
     {:noreply, %{state | listeningto: new_subs}}
   end
 
@@ -100,7 +101,6 @@ defmodule Observables.GenObservable do
   end
 
   def handle_cast(:stop, state) do
-
     state.listeners
     |> Enum.map(fn obs -> cast(obs, {:dependency_stopping, self()}) end)
 

@@ -37,6 +37,32 @@ defmodule Observables.Obs do
      end, pid}
   end
 
+  @doc """
+  Range creates an observable that will start at the given integer and run until the last integer.
+  If no second argument is given, the stream is infinite.
+  One can use :infinity as the end for an infinite stream (see: https://elixirforum.com/t/infinity-in-elixir-erlang/7396)
+  """
+  def range(first, last, delay \\ 1000) do
+    action = fn :tick, current ->
+      case {current, last} do
+        {current, last} when current > last ->
+          {:done, current}
+
+        {current, _last} ->
+          Process.send_after(self(), {:event, :tick}, delay)
+          {:value, current, current + 1}
+      end
+    end
+
+    {:ok, pid} = GenObservable.start(StatefulAction, [action, first])
+
+    Process.send_after(pid, {:event, :tick}, delay)
+
+    {fn observer ->
+       GenObservable.send_to(pid, observer)
+     end, pid}
+  end
+
   # CONSUMER AND PRODUCER ########################################################
 
   def merge({observable_fn_1, _parent_pid_1}, {observable_fn_2, _parent_pid_2}) do
@@ -127,7 +153,6 @@ defmodule Observables.Obs do
   end
 
   def switch({observable_fn, _parent_pid}) do
-
     action = fn new_obs, s ->
       switcher = self()
 
@@ -204,7 +229,6 @@ defmodule Observables.Obs do
 
     # Creat the continuation.
     {fn observer ->
-
        GenObservable.send_to(pid, observer)
      end, pid}
   end

@@ -13,7 +13,6 @@ defmodule Observables do
     {:value, message, state}
   end
 
-
   def test_switch do
     {:ok, pid1} = GenObservable.spawn_supervised(Observables, 0)
 
@@ -29,7 +28,8 @@ defmodule Observables do
 
     # We will send observables to this observable
     # such that it "produces a stream of observables"
-    IO.puts "Switch: #{inspect pid1}"
+    IO.puts("Switch: #{inspect(pid1)}")
+
     Obs.from_pid(pid1)
     |> Obs.switch()
     |> Obs.print()
@@ -37,5 +37,4 @@ defmodule Observables do
     # returned for debugging
     {pid1, x, y}
   end
-
 end
