@@ -1,6 +1,6 @@
 defmodule Observables.FromEnum do
   @moduledoc """
-  A GenServer template for a "singleton" process.
+  From Enum takes a list and then returns the values periodically.
   """
   use Observables.GenObservable
 
@@ -20,8 +20,7 @@ defmodule Observables.FromEnum do
   end
 
   def handle_done(pid, _state) do
-    Logger.debug "#{inspect self()}: dependency stopping: #{inspect pid}"
+    Logger.debug("#{inspect(self())}: dependency stopping: #{inspect(pid)}")
     {:ok, :continue}
   end
-
 end

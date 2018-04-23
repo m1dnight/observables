@@ -105,15 +105,21 @@ defmodule Observables.GenObservable do
   end
 
   def handle_cast({:dependency_stopping, pid}, state) do
-    Logger.warn "Dependency (#{inspect pid}) is stopping. I (#{inspect self()}) am currently depending on #{inspect state.listeningto}"
+    Logger.warn(
+      "Dependency (#{inspect(pid)}) is stopping. I (#{inspect(self())}) am currently depending on #{
+        inspect(state.listeningto)
+      }"
+    )
+
     response = state.module.handle_done(pid, state.state)
 
     # We forward this event to the module first, and see what it wants to do.
     case response do
       {:ok, :done} ->
-        Logger.debug "We are stopping as well."
+        Logger.debug("We are stopping as well.")
+
       {:ok, :continue} ->
-        Logger.debug "We are going on"
+        Logger.debug("We are going on")
     end
 
     # Remove observee.

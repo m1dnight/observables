@@ -26,8 +26,7 @@ defmodule Observables.Zip do
   end
 
   def handle_done(pid, _state) do
-    Logger.debug "#{inspect self()}: dependency stopping: #{inspect pid}"
+    Logger.debug("#{inspect(self())}: dependency stopping: #{inspect(pid)}")
     {:ok, :continue}
   end
-
 end

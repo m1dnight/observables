@@ -4,13 +4,13 @@ defmodule ObservablesTest do
   require Logger
 
   def sleep(ms) do
-    Logger.debug "Sleeping for #{ms}"
+    Logger.debug("Sleeping for #{ms}")
+
     receive do
       :nevergonnahappen -> :ok
     after
-      ms -> Logger.debug "Woken up"
+      ms -> Logger.debug("Woken up")
     end
-
   end
 
   doctest Observables
@@ -159,7 +159,7 @@ defmodule ObservablesTest do
       |> Enum.to_list()
       |> Obs.from_enum()
 
-    Logger.debug "Setting new observable x"
+    Logger.debug("Setting new observable x")
     GenObservable.send_event(pid, x)
     sleep(10000)
 
@@ -167,18 +167,20 @@ defmodule ObservablesTest do
       6..10
       |> Enum.to_list()
       |> Obs.from_enum()
-      Logger.debug "Setting new observable y"
+
+    Logger.debug("Setting new observable y")
     GenObservable.send_event(pid, y)
 
     1..10
     |> Enum.map(fn x ->
       receive do
-        v -> Logger.debug "Got #{v}"
+        v -> Logger.debug("Got #{v}")
       end
     end)
 
     assert 5 == 5
   end
+
   @tag :range
   test "range" do
     testproc = self()
@@ -189,7 +191,7 @@ defmodule ObservablesTest do
     1..5
     |> Enum.map(fn x ->
       receive do
-        v -> Logger.debug "Got #{v}"
+        v -> Logger.debug("Got #{v}")
       end
     end)
 
@@ -207,7 +209,7 @@ defmodule ObservablesTest do
     1..5
     |> Enum.map(fn x ->
       receive do
-        {^x, ^x} -> Logger.debug "Got #{inspect {x, x}}"
+        {^x, ^x} -> Logger.debug("Got #{inspect({x, x})}")
       end
     end)
 

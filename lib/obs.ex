@@ -1,5 +1,5 @@
 defmodule Observables.Obs do
-  alias Observables.{Action, StatefulAction, Switch, GenObservable, FromEnum}
+  alias Observables.{Action, StatefulAction, Switch, GenObservable, FromEnum, Range}
   alias Enum
   require Logger
   alias Logger
@@ -32,18 +32,7 @@ defmodule Observables.Obs do
   One can use :infinity as the end for an infinite stream (see: https://elixirforum.com/t/infinity-in-elixir-erlang/7396)
   """
   def range(first, last, delay \\ 1000) do
-    action = fn :tick, current ->
-      case {current, last} do
-        {current, last} when current > last ->
-          {:done, current}
-
-        {current, _last} ->
-          Process.send_after(self(), {:event, :tick}, delay)
-          {:value, current, current + 1}
-      end
-    end
-
-    {:ok, pid} = GenObservable.start(StatefulAction, [action, first])
+    {:ok, pid} = GenObservable.start(Range, [first, last, delay])
 
     Process.send_after(pid, {:event, :tick}, delay)
 
