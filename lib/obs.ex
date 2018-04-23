@@ -158,31 +158,8 @@ defmodule Observables.Obs do
   end
 
   def switch({observable_fn, _parent_pid}) do
-    action = fn new_obs, s ->
-      switcher = self()
-
-      # Unsubscribe to the previous observer we were forwarding.
-      if s != nil do
-        {:forwarder, forwarder, :sender, observable} = s
-        {_f, pidf} = forwarder
-        GenObservable.stop_send_to(pidf, self())
-        {_f, pids} = observable
-        GenObservable.stop_send_to(pids, pidf)
-      end
-
-      # We subscribe to this observable.
-      # {_, obsvpid} = observable
-      # GenObservable.send_to(obsvpid, self())
-
-      forwarder =
-        new_obs
-        |> map(fn v -> GenObservable.send_event(switcher, {:forward, v}) end)
-
-      {:novalue, {:forwarder, forwarder, :sender, new_obs}}
-    end
-
     # Start the producer/consumer server.
-    {:ok, pid} = GenObservable.start_link(Switch, [action, nil])
+    {:ok, pid} = GenObservable.start_link(Switch, [])
 
     observable_fn.(pid)
 

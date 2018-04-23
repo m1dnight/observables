@@ -3,29 +3,38 @@ defmodule Observables.Switch do
   A GenServer template for a "singleton" process.
   """
   use Observables.GenObservable
+  alias Observables.GenObservable
+  alias Observables.Obs
 
-  def init([action, state]) do
-    {:ok, %{:state => state, :action => action}}
+  def init([]) do
+    {:ok, nil}
   end
 
   def handle_event({:forward, v}, state) do
     {:value, v, state}
   end
 
-  def handle_event(e, %{:state => s, :action => a}) do
-    case a.(e, s) do
-      {:value, v, new_s} ->
-        {:value, v, %{:state => new_s, :action => a}}
+  def handle_event(new_obs, s) do
+    switcher = self()
 
-      {:novalue, new_s} ->
-        {:novalue, %{:state => new_s, :action => a}}
-
-      {:done, new_s} ->
-        {:done, new_s}
-
-      _ ->
-        Logger.error("Invalid return value from Observable action!")
+    # Unsubscribe to the previous observer we were forwarding.
+    if s != nil do
+      {:forwarder, forwarder, :sender, observable} = s
+      {_f, pidf} = forwarder
+      GenObservable.stop_send_to(pidf, self())
+      {_f, pids} = observable
+      GenObservable.stop_send_to(pids, pidf)
     end
+
+    # We subscribe to this observable.
+    # {_, obsvpid} = observable
+    # GenObservable.send_to(obsvpid, self())
+
+    forwarder =
+      new_obs
+      |> Obs.map(fn v -> GenObservable.send_event(switcher, {:forward, v}) end)
+
+    {:novalue, {:forwarder, forwarder, :sender, new_obs}}
   end
 
   def handle_done(_pid, state) do

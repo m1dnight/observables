@@ -215,6 +215,7 @@ defmodule ObservablesTest do
     end
   end
 
+  @tag :switch
   test "switch" do
     testproc = self()
 
