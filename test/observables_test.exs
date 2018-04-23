@@ -55,7 +55,7 @@ defmodule ObservablesTest do
 
     assert 5 == 5
   end
-
+  @tag :merge
   test "Merge" do
     testproc = self()
 
@@ -74,6 +74,7 @@ defmodule ObservablesTest do
       end
     end)
 
+    sleep(3000)
     assert 5 == 5
   end
 

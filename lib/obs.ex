@@ -1,5 +1,5 @@
 defmodule Observables.Obs do
-  alias Observables.{Action, StatefulAction, Switch, GenObservable, FromEnum, Range, Zip}
+  alias Observables.{Action, StatefulAction, Switch, GenObservable, FromEnum, Range, Zip, Merge}
   alias Enum
   require Logger
   alias Logger
@@ -70,7 +70,7 @@ defmodule Observables.Obs do
   def merge({observable_fn_1, _parent_pid_1}, {observable_fn_2, _parent_pid_2}) do
     action = fn x -> {:value, x} end
 
-    {:ok, pid} = GenObservable.start_link(Action, action)
+    {:ok, pid} = GenObservable.start_link(Merge, [])
 
     observable_fn_1.(pid)
     observable_fn_2.(pid)
