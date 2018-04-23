@@ -1,5 +1,5 @@
 defmodule Observables.Obs do
-  alias Observables.{Action, StatefulAction, Switch, GenObservable, FromEnum, Range, Zip, Merge, Map}
+  alias Observables.{Action, StatefulAction, Switch, GenObservable, FromEnum, Range, Zip, Merge, Map, Distinct}
   alias Enum
   require Logger
   alias Logger
@@ -91,17 +91,14 @@ defmodule Observables.Obs do
   end
 
   def distinct({observable_fn, _parent_pid}, f \\ fn x, y -> x == y end) do
-    action = fn v, state ->
-      seen? = Enum.any?(state, fn seen -> f.(v, seen) end)
+    {:ok, pid} = GenObservable.start_link(Distinct, [f])
 
-      if not seen? do
-        {:value, v, [v | state]}
-      else
-        {:novalue, state}
-      end
-    end
+    observable_fn.(pid)
 
-    create_stateful_action(observable_fn, action, [])
+    # Creat the continuation.
+    {fn observer ->
+       GenObservable.send_to(pid, observer)
+     end, pid}
   end
 
   def each({observable_fn, _parent_pid}, f) do

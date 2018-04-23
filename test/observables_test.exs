@@ -99,6 +99,7 @@ defmodule ObservablesTest do
     assert 5 == 5
   end
 
+  @tag :distinct
   test "Distinct" do
     testproc = self()
 
