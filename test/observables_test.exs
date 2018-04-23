@@ -126,6 +126,34 @@ defmodule ObservablesTest do
     assert 5 == 5
   end
 
+  @tag :each
+  test "Each" do
+    testproc = self()
+
+    xs = [1, 1, 1, 1]
+
+    xs
+    |> Obs.from_enum(100)
+    |> Obs.each(fn x -> IO.inspect(x) end)
+    |> Obs.map(fn v -> send(testproc, v) end)
+
+    xs
+    |> Enum.map(fn x ->
+      receive do
+        ^x -> :ok
+      end
+    end)
+
+    receive do
+      x -> Logger.error "Received another value, did not want"
+      assert 5 == 10
+    after 1000 ->
+      :ok
+    end
+
+    assert 5 == 5
+  end
+
   test "Filter" do
     testproc = self()
 
