@@ -215,4 +215,22 @@ defmodule ObservablesTest do
 
     sleep(5000)
   end
+
+  @tag :zip
+  test "zip uneven inputs" do
+    testproc = self()
+
+    Obs.range(1, 5, 500)
+    |> Obs.zip(Obs.range(1, 10, 500))
+    |> Obs.map(fn x -> send(testproc, x) end)
+
+    1..5
+    |> Enum.map(fn x ->
+      receive do
+        {^x, ^x} -> Logger.debug("Got #{inspect({x, x})}")
+      end
+    end)
+
+    sleep(5000)
+  end
 end

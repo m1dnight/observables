@@ -5,6 +5,7 @@ defmodule Observables.Range do
   use Observables.GenObservable
 
   def init([first, last, delay]) do
+    Logger.debug "Range: #{inspect self()}"
     {:ok, %{:first => first, :last => last, :current => first, :delay => delay}}
   end
 

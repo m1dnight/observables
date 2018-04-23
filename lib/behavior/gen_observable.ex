@@ -110,29 +110,29 @@ defmodule Observables.GenObservable do
         inspect(state.listeningto)
       }"
     )
-
     response = state.module.handle_done(pid, state.state)
 
     # We forward this event to the module first, and see what it wants to do.
     case response do
       {:ok, :done} ->
-        Logger.debug("We are stopping as well.")
+        
+        Logger.debug("#{inspect self()} stopping.")
+        cast(self(), :stop)
+        {:noreply, state}
 
       {:ok, :continue} ->
-        Logger.debug("We are going on")
+        Logger.debug("#{inspect self()} going on.")
+        # Remove observee.
+        new_subs =
+          state.listeningto
+          |> Enum.filter(fn sub -> sub != pid end)
+
+        if count(new_subs) == 0 do
+          Logger.warn("#{inspect(self())} all dependencies done, stopping ourselves.")
+          cast(self(), :stop)
+        end
+        {:noreply, %{state | listeningto: new_subs}}
     end
-
-    # Remove observee.
-    new_subs =
-      state.listeningto
-      |> Enum.filter(fn sub -> sub != pid end)
-
-    if count(new_subs) == 0 do
-      Logger.warn("#{inspect(self())} all dependencies done, stopping ourselves.")
-      cast(self(), :stop)
-    end
-
-    {:noreply, %{state | listeningto: new_subs}}
   end
 
   ###################
@@ -140,7 +140,7 @@ defmodule Observables.GenObservable do
   ###################
 
   def handle_cast(:stop, state) do
-    Logger.warn("I (#{inspect(self())}) am stopping")
+    Logger.warn("#{inspect(self())} am stopping")
 
     state.listeners
     |> Enum.map(fn obs -> cast(obs, {:dependency_stopping, self()}) end)

@@ -4,29 +4,49 @@ defmodule Observables.Zip do
   """
   use Observables.GenObservable
 
-  def init([action, state]) do
-    {:ok, %{:state => state, :action => action}}
+  def init([]) do
+    Logger.debug "Zip: #{inspect self()}"
+    {:ok, {:left, [], :right, []}}
   end
 
-  def handle_event(e, %{:state => s, :action => a}) do
-    case a.(e, s) do
-      {:value, v, new_s} ->
-        {:value, v, %{:state => new_s, :action => a}}
+  def handle_event(value,state) do
+    case {value, state} do
+      # No values at all, and got a left.
+      {{:left, vl}, {:left, [], :right, []}} ->
+        {:novalue, {:left, [vl], :right, []}}
 
-      {:novalue, new_s} ->
-        {:novalue, %{:state => new_s, :action => a}}
+      # No values yet, and got a right.
+      {{:right, vr}, {:left, [], :right, []}} ->
+        {:novalue, {:left, [], :right, [vr]}}
 
-      {:buffer, v, new_s} ->
-        {:buffer, v, %{:state => new_s, :action => a}}
+      # Already have left, now got right.
+      {{:right, vr}, {:left, [vl | vls], :right, []}} ->
+        {:value, {vl, vr}, {:left, vls, :right, []}}
 
-      {:done, new_s} ->
-        Logger.debug("done")
-        {:done, new_s}
+      # Already have a right value, and now received left.
+      {{:left, vl}, {:left, [], :right, [vr | vrs]}} ->
+        {:value, {vl, vr}, {:left, [], :right, vrs}}
+
+      # Already have a left, and received a left.
+      {{:left, vln}, {:left, vls, :right, []}} ->
+        {:novalue, {:left, vls ++ [vln], :right, []}}
+
+      # Already have a right, and received a right.
+      {{:right, vr}, {:left, [], :right, vrs}} ->
+        {:novalue, {:left, [], :right, vrs ++ [vr]}}
+
+      # Have left and right, and received a right.
+      {{:right, vrn}, {:left, [vl | vls], :right, [vr | vrs]}} ->
+        {:value, {vl, vr}, {:left, vls, right: vrs ++ [vrn]}}
+
+      # Have left and right, and received a left.
+      {{:left, vln}, {:left, [vl | vls], :right, [vr | vrs]}} ->
+        {:value, {vl, vr}, {:left, vls ++ [vln], right: vrs}}
     end
   end
 
-  def handle_done(pid, _state) do
-    Logger.debug("#{inspect(self())}: dependency stopping: #{inspect(pid)}")
-    {:ok, :continue}
+  def handle_done(_pid, _state) do
+    Logger.debug("#{inspect(self())}: zip has one dead dependency, stopping.")
+    {:ok, :done}
   end
 end
