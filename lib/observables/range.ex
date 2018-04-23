@@ -8,10 +8,7 @@ defmodule Observables.Range do
     {:ok, %{:first => first, :last => last, :current => first, :delay => delay}}
   end
 
-  def handle_event(
-        :tick,
-        state = %{:first => first, :last => last, :current => current, :delay => delay}
-      ) do
+  def handle_event(:tick, state = %{:first => first, :last => last, :current => current, :delay => delay}) do
     case {current, last} do
       {current, last} when current > last ->
         {:done, state}
