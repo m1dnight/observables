@@ -1,4 +1,4 @@
-defmodule Observables.StatefulAction do
+defmodule Observables.ToList do
   @moduledoc """
   A GenServer template for a "singleton" process.
   """
@@ -25,9 +25,7 @@ defmodule Observables.StatefulAction do
     end
   end
 
-  def handle_done(pid, _state) do
-    Logger.debug "#{inspect self()}: dependency stopping: #{inspect pid}"
-    {:ok, :continue}
+  def handle_done(_pid, state) do
+    {:ok, state}
   end
-
 end

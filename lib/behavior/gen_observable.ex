@@ -18,7 +18,7 @@ defmodule Observables.GenObservable do
       require Logger
 
       def handle_done(pid, _state) do
-        :ok
+        {:ok, :continue}
       end
 
       defoverridable handle_done: 2
@@ -69,6 +69,10 @@ defmodule Observables.GenObservable do
     end
   end
 
+  ################
+  # Dependencies #
+  ################
+
   def handle_cast({:send_to, pid}, state) do
     {:noreply, %{state | listeners: [pid | state.listeners]}}
   end
@@ -100,27 +104,42 @@ defmodule Observables.GenObservable do
     {:noreply, state}
   end
 
-  def handle_cast(:stop, state) do
-    Logger.warn "#{inspect self()} stopping"
-    state.listeners
-    |> Enum.map(fn obs -> cast(obs, {:dependency_stopping, self()}) end)
-
-    {:stop, :normal, state}
-  end
-
   def handle_cast({:dependency_stopping, pid}, state) do
-    state.module.handle_done(pid, state.state)
+    Logger.warn "Dependency (#{inspect pid}) is stopping. I (#{inspect self()}) am currently depending on #{inspect state.listeningto}"
+    response = state.module.handle_done(pid, state.state)
+
+    # We forward this event to the module first, and see what it wants to do.
+    case response do
+      {:ok, :done} ->
+        Logger.debug "We are stopping as well."
+      {:ok, :continue} ->
+        Logger.debug "We are going on"
+    end
+
     # Remove observee.
     new_subs =
       state.listeningto
       |> Enum.filter(fn sub -> sub != pid end)
 
     if count(new_subs) == 0 do
-      Logger.warn "#{inspect self()} all dependencies done, stopping ourselves."
+      Logger.warn("#{inspect(self())} all dependencies done, stopping ourselves.")
       cast(self(), :stop)
     end
 
     {:noreply, %{state | listeningto: new_subs}}
+  end
+
+  ###################
+  # Self Management #
+  ###################
+
+  def handle_cast(:stop, state) do
+    Logger.warn("I (#{inspect(self())}) am stopping")
+
+    state.listeners
+    |> Enum.map(fn obs -> cast(obs, {:dependency_stopping, self()}) end)
+
+    {:stop, :normal, state}
   end
 
   def handle_cast({:event, value}, state) do

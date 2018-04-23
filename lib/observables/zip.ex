@@ -20,16 +20,14 @@ defmodule Observables.Zip do
         {:buffer, v, %{:state => new_s, :action => a}}
 
       {:done, new_s} ->
+        Logger.debug("done")
         {:done, new_s}
     end
   end
 
-  def handle_done(_pid, state) do
-    {:ok, state}
+  def handle_done(pid, _state) do
+    Logger.debug "#{inspect self()}: dependency stopping: #{inspect pid}"
+    {:ok, :continue}
   end
 
-  # If in a zip, one of the dependencies stops, we stop as well.
-  def handle_stopped_dependency(listeners, listening_to) do
-    {:ok, :stop}
-  end
 end

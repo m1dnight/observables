@@ -36,13 +36,14 @@ defmodule ObservablesTest do
     assert 5 == 5
   end
 
+  @tag :fromenum
   test "Test from enum" do
     testproc = self()
 
     xs = [1, 2, 3]
 
     xs
-    |> Obs.from_enum(100)
+    |> Obs.from_enum(1000)
     |> Obs.map(fn v -> send(testproc, v) end)
 
     xs
@@ -144,41 +145,6 @@ defmodule ObservablesTest do
     assert 5 == 5
   end
 
-  @tag :range
-  test "range" do
-    testproc = self()
-
-    Obs.range(1, 5, 500)
-    |> Obs.map(fn x -> send(testproc, x) end)
-
-    1..5
-    |> Enum.map(fn x ->
-      receive do
-        v -> Logger.debug "Got #{v}"
-      end
-    end)
-
-    assert 5 == 5
-  end
-
-  @tag :zip
-  test "zip" do
-    testproc = self()
-
-    Obs.range(1, 5, 500)
-    |> Obs.zip(Obs.range(1, 5, 500))
-    |> Obs.map(fn x -> send(testproc, x) end)
-
-    1..5
-    |> Enum.map(fn x ->
-      receive do
-        {^x, ^x} -> Logger.debug "Got #{inspect {x, x}}"
-      end
-    end)
-
-    sleep(5000)
-  end
-
   test "switch" do
     testproc = self()
 
@@ -213,5 +179,38 @@ defmodule ObservablesTest do
 
     assert 5 == 5
   end
+  @tag :range
+  test "range" do
+    testproc = self()
 
+    Obs.range(1, 5, 500)
+    |> Obs.map(fn x -> send(testproc, x) end)
+
+    1..5
+    |> Enum.map(fn x ->
+      receive do
+        v -> Logger.debug "Got #{v}"
+      end
+    end)
+
+    assert 5 == 5
+  end
+
+  @tag :zip
+  test "zip" do
+    testproc = self()
+
+    Obs.range(1, 5, 500)
+    |> Obs.zip(Obs.range(1, 5, 500))
+    |> Obs.map(fn x -> send(testproc, x) end)
+
+    1..5
+    |> Enum.map(fn x ->
+      receive do
+        {^x, ^x} -> Logger.debug "Got #{inspect {x, x}}"
+      end
+    end)
+
+    sleep(5000)
+  end
 end

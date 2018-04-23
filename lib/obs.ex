@@ -1,5 +1,5 @@
 defmodule Observables.Obs do
-  alias Observables.{Action, StatefulAction, Switch, GenObservable}
+  alias Observables.{Action, StatefulAction, Switch, GenObservable, FromEnum}
   alias Enum
   require Logger
   alias Logger
@@ -17,18 +17,7 @@ defmodule Observables.Obs do
   If the enum is consumed, returns done.
   """
   def from_enum(coll, delay \\ 1000) do
-    action = fn :spit, state ->
-      case state do
-        [] ->
-          {:done, state}
-
-        [x | xs] ->
-          Process.send_after(self(), {:event, :spit}, delay)
-          {:value, x, xs}
-      end
-    end
-
-    {:ok, pid} = GenObservable.start(StatefulAction, [action, coll])
+    {:ok, pid} = GenObservable.start(FromEnum, [coll, delay])
 
     Process.send_after(pid, {:event, :spit}, delay)
 
@@ -266,6 +255,10 @@ defmodule Observables.Obs do
     end
 
     map({observable_fn, parent_pid}, action)
+  end
+
+  def to_list({observable_fn, parent_pid}) do
+    # Create a proxy observable, that will send all the values to us.
   end
 
   # HELPERS ######################################################################
