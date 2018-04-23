@@ -5,8 +5,9 @@ defmodule Observables.Merge do
   use Observables.GenObservable
 
   def init([]) do
-    Logger.debug "Merge: #{inspect self()}"
-    {:ok, nil} # We don't keep state in merge.
+    Logger.debug("Merge: #{inspect(self())}")
+    # We don't keep state in merge.
+    {:ok, nil}
   end
 
   def handle_event(v, _state) do

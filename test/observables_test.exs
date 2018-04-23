@@ -55,6 +55,7 @@ defmodule ObservablesTest do
 
     assert 5 == 5
   end
+
   @tag :merge
   test "Merge" do
     testproc = self()
@@ -145,15 +146,18 @@ defmodule ObservablesTest do
     end)
 
     receive do
-      x -> Logger.error "Received another value, did not want"
-      assert 5 == 10
-    after 1000 ->
-      :ok
+      x ->
+        Logger.error("Received another value, did not want")
+        assert 5 == 10
+    after
+      1000 ->
+        :ok
     end
 
     assert 5 == 5
   end
 
+  @tag :filter
   test "Filter" do
     testproc = self()
 
@@ -172,9 +176,17 @@ defmodule ObservablesTest do
       end
     end)
 
-    assert 5 == 5
+    receive do
+      x ->
+        Logger.error("Received another value, did not want")
+        assert "received another value: #{inspect(x)}" == ""
+    after
+      1000 ->
+        :ok
+    end
   end
 
+  @tag :startswith
   test "Starts with" do
     testproc = self()
 
@@ -193,7 +205,14 @@ defmodule ObservablesTest do
       end
     end)
 
-    assert 5 == 5
+    receive do
+      x ->
+        Logger.error("Received another value, did not want")
+        assert "received another value: #{inspect(x)}" == ""
+    after
+      1000 ->
+        :ok
+    end
   end
 
   test "switch" do

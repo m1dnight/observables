@@ -1,5 +1,20 @@
 defmodule Observables.Obs do
-  alias Observables.{Action, StatefulAction, Switch, GenObservable, FromEnum, Range, Zip, Merge, Map, Distinct, Each}
+  alias Observables.{
+    Action,
+    StatefulAction,
+    Switch,
+    GenObservable,
+    FromEnum,
+    Range,
+    Zip,
+    Merge,
+    Map,
+    Distinct,
+    Each,
+    Filter,
+    StartsWith
+  }
+
   alias Enum
   require Logger
   alias Logger
@@ -52,7 +67,6 @@ defmodule Observables.Obs do
     {f_r, _pid_r} =
       r
       |> map(fn v -> {:right, v} end)
-
 
     # Start our zipper observable.
     {:ok, pid} = GenObservable.start(Zip, [])
@@ -113,35 +127,27 @@ defmodule Observables.Obs do
   end
 
   def filter({observable_fn, _parent_pid}, f) do
-    # Creat the wrapper for the filter function.
-    filterer = fn v ->
-      if f.(v) do
-        {:value, v}
-      else
-        {:novalue}
-      end
-    end
-
-    create_action(observable_fn, filterer)
+    {:ok, pid} = GenObservable.start_link(Filter, [f])
+    observable_fn.(pid)
+    # Creat the continuation.
+    {fn observer ->
+       GenObservable.send_to(pid, observer)
+     end, pid}
   end
 
   def starts_with({observable_fn, _parent_pid}, start_vs) do
-    action = fn v ->
-      {:value, v}
-    end
-
     # Start the producer/consumer server.
-    {:ok, pid} = GenObservable.start_link(Action, action)
+    {:ok, pid} = GenObservable.start_link(StartsWith, [])
 
     # After the subscription has been made, send all the start values to the producers
     # so he can start pushing them out to our dependees.
     GenObservable.delay(pid, 500)
 
+    # We send each value to the observable, such that it can then forward them to its dependees.
     for v <- start_vs do
       GenObservable.send_event(pid, v)
     end
 
-    # Set ourselves as the dependency of pid, so he can start sending us values, too.
     observable_fn.(pid)
 
     # Creat the continuation.
@@ -189,50 +195,20 @@ defmodule Observables.Obs do
   # TERMINATORS ##################################################################
 
   def print({observable_fn, parent_pid}) do
-    action = fn v ->
+    map({observable_fn, parent_pid}, fn v ->
       IO.puts(v)
       v
-    end
-
-    map({observable_fn, parent_pid}, action)
+    end)
   end
 
   def inspect({observable_fn, parent_pid}) do
-    action = fn v ->
+    map({observable_fn, parent_pid}, fn v ->
       IO.inspect(v)
       v
-    end
-
-    map({observable_fn, parent_pid}, action)
+    end)
   end
 
-  def to_list({observable_fn, parent_pid}) do
-    # Create a proxy observable, that will send all the values to us.
-  end
-
-  # HELPERS ######################################################################
-
-  defp create_action(observable_fn, action) do
-    # Start the producer/consumer server.
-    {:ok, pid} = GenObservable.start_link(Action, action)
-
-    observable_fn.(pid)
-
-    # Creat the continuation.
-    {fn observer ->
-       GenObservable.send_to(pid, observer)
-     end, pid}
-  end
-
-  defp create_stateful_action(observable_fn, action, state) do
-    # Start the producer/consumer server.
-    {:ok, pid} = GenObservable.start_link(StatefulAction, [action, state])
-
-    observable_fn.(pid)
-
-    # Creat the continuation.
-    {fn observer ->
-       GenObservable.send_to(pid, observer)
-     end, pid}
-  end
+  # def to_list({observable_fn, parent_pid}) do
+  #   # Create a proxy observable, that will send all the values to us.
+  # end
 end

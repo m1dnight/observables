@@ -5,7 +5,7 @@ defmodule Observables.Distinct do
   use Observables.GenObservable
 
   def init([comparator]) do
-    Logger.debug "Distinct: #{inspect self()}"
+    Logger.debug("Distinct: #{inspect(self())}")
     {:ok, %{:comp => comparator, :seen => []}}
   end
 

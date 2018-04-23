@@ -1,17 +1,17 @@
-defmodule Observables.Map do
+defmodule Observables.StartsWith do
   @moduledoc """
   Range takes a start and end value and produces all the values in between.
   """
   use Observables.GenObservable
 
-  def init([proc]) do
-    Logger.debug("Map: #{inspect(self())}")
-    # We don't keep state in merge.
-    {:ok, %{:proc => proc}}
+  def init([]) do
+    Logger.debug("Starts With: #{inspect(self())}")
+    # No state for startswith.
+    {:ok, nil}
   end
 
-  def handle_event(v, state = %{:proc => proc}) do
-    {:value, proc.(v), state}
+  def handle_event(v, _state) do
+    {:value, v, nil}
   end
 
   def handle_done(pid, _state) do

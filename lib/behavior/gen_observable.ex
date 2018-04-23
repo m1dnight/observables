@@ -110,18 +110,18 @@ defmodule Observables.GenObservable do
         inspect(state.listeningto)
       }"
     )
+
     response = state.module.handle_done(pid, state.state)
 
     # We forward this event to the module first, and see what it wants to do.
     case response do
       {:ok, :done} ->
-        
-        Logger.debug("#{inspect self()} stopping.")
+        Logger.debug("#{inspect(self())} stopping.")
         cast(self(), :stop)
         {:noreply, state}
 
       {:ok, :continue} ->
-        Logger.debug("#{inspect self()} going on.")
+        Logger.debug("#{inspect(self())} going on.")
         # Remove observee.
         new_subs =
           state.listeningto
@@ -131,6 +131,7 @@ defmodule Observables.GenObservable do
           Logger.warn("#{inspect(self())} all dependencies done, stopping ourselves.")
           cast(self(), :stop)
         end
+
         {:noreply, %{state | listeningto: new_subs}}
     end
   end

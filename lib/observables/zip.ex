@@ -5,11 +5,11 @@ defmodule Observables.Zip do
   use Observables.GenObservable
 
   def init([]) do
-    Logger.debug "Zip: #{inspect self()}"
+    Logger.debug("Zip: #{inspect(self())}")
     {:ok, {:left, [], :right, []}}
   end
 
-  def handle_event(value,state) do
+  def handle_event(value, state) do
     case {value, state} do
       # No values at all, and got a left.
       {{:left, vl}, {:left, [], :right, []}} ->

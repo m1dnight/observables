@@ -5,11 +5,14 @@ defmodule Observables.Range do
   use Observables.GenObservable
 
   def init([first, last, delay]) do
-    Logger.debug "Range: #{inspect self()}"
+    Logger.debug("Range: #{inspect(self())}")
     {:ok, %{:first => first, :last => last, :current => first, :delay => delay}}
   end
 
-  def handle_event(:tick, state = %{:first => first, :last => last, :current => current, :delay => delay}) do
+  def handle_event(
+        :tick,
+        state = %{:first => first, :last => last, :current => current, :delay => delay}
+      ) do
     case {current, last} do
       {current, last} when current > last ->
         {:done, state}

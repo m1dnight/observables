@@ -5,8 +5,9 @@ defmodule Observables.Each do
   use Observables.GenObservable
 
   def init([proc]) do
-    Logger.debug "Each: #{inspect self()}"
-    {:ok, %{:proc => proc}} # We don't keep state in merge.
+    Logger.debug("Each: #{inspect(self())}")
+    # We don't keep state in merge.
+    {:ok, %{:proc => proc}}
   end
 
   def handle_event(v, state = %{:proc => proc}) do
