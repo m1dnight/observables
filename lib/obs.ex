@@ -1,5 +1,5 @@
 defmodule Observables.Obs do
-  alias Observables.{Action, StatefulAction, Switch, GenObservable, FromEnum, Range, Zip, Merge}
+  alias Observables.{Action, StatefulAction, Switch, GenObservable, FromEnum, Range, Zip, Merge, Map}
   alias Enum
   require Logger
   alias Logger
@@ -68,8 +68,6 @@ defmodule Observables.Obs do
   end
 
   def merge({observable_fn_1, _parent_pid_1}, {observable_fn_2, _parent_pid_2}) do
-    action = fn x -> {:value, x} end
-
     {:ok, pid} = GenObservable.start_link(Merge, [])
 
     observable_fn_1.(pid)
@@ -82,13 +80,14 @@ defmodule Observables.Obs do
   end
 
   def map({observable_fn, _parent_pid}, f) do
-    # Create the mapper function.
-    mapper = fn v ->
-      new_v = f.(v)
-      {:value, new_v}
-    end
+    {:ok, pid} = GenObservable.start_link(Map, [f])
 
-    create_action(observable_fn, mapper)
+    observable_fn.(pid)
+
+    # Creat the continuation.
+    {fn observer ->
+       GenObservable.send_to(pid, observer)
+     end, pid}
   end
 
   def distinct({observable_fn, _parent_pid}, f \\ fn x, y -> x == y end) do
