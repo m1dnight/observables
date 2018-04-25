@@ -14,6 +14,12 @@ defmodule Observables.Range do
         state = %{:first => first, :last => last, :current => current, :delay => delay}
       ) do
     case {current, last} do
+      {current, :infinity} ->
+        Process.send_after(self(), {:event, :tick}, delay)
+
+        {:value, current,
+         %{:first => first, :last => last, :current => current + 1, :delay => delay}}
+
       {current, last} when current > last ->
         {:done, state}
 

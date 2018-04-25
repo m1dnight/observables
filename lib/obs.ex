@@ -12,7 +12,8 @@ defmodule Observables.Obs do
     Distinct,
     Each,
     Filter,
-    StartsWith
+    StartsWith,
+    Repeat
   }
 
   alias Enum
@@ -54,6 +55,20 @@ defmodule Observables.Obs do
     {fn observer ->
        GenObservable.send_to(pid, observer)
      end, pid}
+  end
+
+  @doc """
+  repeat takes a function as argument and an optional interval.
+  The function will be repeatedly executed, and the result will be emitted as an event.
+  """
+  def repeat(f, opts \\ []) do
+    interval = Keyword.get(opts, :interval, 1000)
+    times = Keyword.get(opts, :times, :infinity)
+
+    range(1, times, interval)
+    |> map(fn _ ->
+      f.()
+    end)
   end
 
   # CONSUMER AND PRODUCER ########################################################
