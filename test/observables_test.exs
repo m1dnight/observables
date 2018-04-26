@@ -4,20 +4,18 @@ defmodule ObservablesTest do
   require Logger
 
   def sleep(ms) do
-    Logger.debug("Sleeping for #{ms}")
 
     receive do
       :nevergonnahappen -> :ok
     after
-      ms -> Logger.debug("Woken up")
+      ms -> :ok
     end
   end
 
-  doctest Observables
 
   test "Test from pid" do
     testproc = self()
-    {:ok, pid1} = GenObservable.spawn_supervised(Observables, 0)
+    {:ok, pid1} = GenObservable.spawn_supervised(Subject, 0)
 
     Obs.from_pid(pid1)
     |> Obs.map(fn v -> send(testproc, :ok) end)
@@ -219,7 +217,7 @@ defmodule ObservablesTest do
   test "switch" do
     testproc = self()
 
-    {:ok, pid} = GenObservable.spawn_supervised(Observables, 0)
+    {:ok, pid} = GenObservable.spawn_supervised(Subject, 0)
 
     Obs.from_pid(pid)
     |> Obs.switch()

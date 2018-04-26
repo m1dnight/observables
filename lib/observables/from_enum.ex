@@ -1,7 +1,5 @@
 defmodule Observables.FromEnum do
-  @moduledoc """
-  From Enum takes a list and then returns the values periodically.
-  """
+  @moduledoc false
   use Observables.GenObservable
 
   def init([coll, delay]) do

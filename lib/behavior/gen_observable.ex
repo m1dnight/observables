@@ -1,4 +1,5 @@
 defmodule Observables.GenObservable do
+  @moduledoc false
   require Logger
   import GenServer
   import Enum

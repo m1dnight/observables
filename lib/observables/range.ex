@@ -1,7 +1,5 @@
 defmodule Observables.Range do
-  @moduledoc """
-  Range takes a start and end value and produces all the values in between.
-  """
+  @moduledoc false
   use Observables.GenObservable
 
   def init([first, last, delay]) do

@@ -1,7 +1,5 @@
 defmodule Observables.Filter do
-  @moduledoc """
-  Range takes a start and end value and produces all the values in between.
-  """
+  @moduledoc false
   use Observables.GenObservable
 
   def init([filter]) do

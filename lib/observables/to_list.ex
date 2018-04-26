@@ -1,7 +1,5 @@
 defmodule Observables.ToList do
-  @moduledoc """
-  A GenServer template for a "singleton" process.
-  """
+  @moduledoc false
   use Observables.GenObservable
 
   def init([action, state]) do

@@ -1,7 +1,5 @@
 defmodule Observables.Switch do
-  @moduledoc """
-  A GenServer template for a "singleton" process.
-  """
+  @moduledoc false
   use Observables.GenObservable
   alias Observables.GenObservable
   alias Observables.Obs

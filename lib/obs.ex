@@ -1,7 +1,5 @@
 defmodule Observables.Obs do
   alias Observables.{
-    Action,
-    StatefulAction,
     Switch,
     GenObservable,
     FromEnum,
@@ -12,8 +10,7 @@ defmodule Observables.Obs do
     Distinct,
     Each,
     Filter,
-    StartsWith,
-    Repeat
+    StartsWith
   }
 
   alias Enum
@@ -22,6 +19,9 @@ defmodule Observables.Obs do
 
   # GENERATORS ###################################################################
 
+  @doc """
+  from_pid/1 can be considered to be a subject. Any process that implements 
+  """
   def from_pid(producer) do
     {fn consumer ->
        GenObservable.send_to(producer, consumer)

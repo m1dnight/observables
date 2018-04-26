@@ -1,7 +1,5 @@
 defmodule Observables.Zip do
-  @moduledoc """
-  A GenServer template for a "singleton" process.
-  """
+  @moduledoc false
   use Observables.GenObservable
 
   def init([]) do

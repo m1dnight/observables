@@ -1,4 +1,5 @@
 defmodule Observables.Supervisor do
+  @moduledoc false
   use Supervisor
 
   def start_link(arg \\ []) do
