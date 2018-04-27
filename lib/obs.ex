@@ -10,7 +10,8 @@ defmodule Observables.Obs do
     Distinct,
     Each,
     Filter,
-    StartsWith
+    StartsWith,
+    Buffer
   }
 
   alias Enum
@@ -20,7 +21,7 @@ defmodule Observables.Obs do
   # GENERATORS ###################################################################
 
   @doc """
-  from_pid/1 can be considered to be a subject. Any process that implements 
+  from_pid/1 can be considered to be a subject. Any process that implements
   """
   def from_pid(producer) do
     {fn consumer ->
@@ -182,6 +183,23 @@ defmodule Observables.Obs do
     {fn observer ->
        GenObservable.send_to(pid, observer)
      end, pid}
+  end
+
+  @doc """
+  Periodically gather items emitted by an Observable into bundles of size `size` and emit
+  these bundles rather than emitting the items one at a time.
+
+  Source: http://reactivex.io/documentation/operators/buffer.html
+  """
+  def buffer({observable_fn, _parent_pid}, size) do
+    {:ok, pid} = GenObservable.start_link(Buffer, [size])
+
+    observable_fn.(pid)
+
+    # Create the continuation.
+    {fn observer ->
+      GenObservable.send_to(pid, observer)
+    end, pid}
   end
 
   # TERMINATORS ##################################################################

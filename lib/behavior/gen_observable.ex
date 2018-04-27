@@ -121,6 +121,12 @@ defmodule Observables.GenObservable do
         cast(self(), :stop)
         {:noreply, state}
 
+      {:ok, :done, {:value, value}} ->
+        Logger.debug("#{inspect(self())} stopping.")
+        cast(self(), {:notify_all, value})
+        cast(self(), :stop)
+        {:noreply, state}
+
       {:ok, :continue} ->
         Logger.debug("#{inspect(self())} going on.")
         # Remove observee.
