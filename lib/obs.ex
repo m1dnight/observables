@@ -12,7 +12,8 @@ defmodule Observables.Obs do
     Filter,
     StartsWith,
     Buffer,
-    Chunk
+    Chunk,
+    Scan
   }
 
   alias Enum
@@ -295,6 +296,25 @@ defmodule Observables.Obs do
      end, pid}
   end
 
+  @doc """
+  Applies a given procedure to an observable's value, and its previous result. 
+  Works in the same way as the Enum.scan function:
+
+  Enum.scan(1..10, fn(x,y) -> x + y end) 
+  => [1, 3, 6, 10, 15, 21, 28, 36, 45, 55]
+
+  More information: http://reactivex.io/documentation/operators/scan.html
+  """
+  def scan({observable_fn, parent_pid}, f) do
+    {:ok, pid} = GenObservable.start_link(Scan, [f])
+
+    observable_fn.(pid)
+
+    # Creat the continuation.
+    {fn observer ->
+       GenObservable.send_to(pid, observer)
+     end, pid}
+  end
   # TERMINATORS ##################################################################
 
   @doc """
