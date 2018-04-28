@@ -23,7 +23,6 @@ defmodule Observables.Buffer do
   end
 
   def handle_done(pid, %{:size => size, :buffer => bs}) do
-
     # We are buffering, and if our dependency stops we need to flush our buffer or we are losing values.
     Logger.debug("#{inspect(self())}: dependency stopping: #{inspect(pid)}")
     {:ok, :done, {:value, bs}}

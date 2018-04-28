@@ -20,3 +20,4 @@ end
 ## TODO
 
  - A `zip` observable should stop as soon as one of both observables stops *and* the buffer has been consumed. 
+ - At this point we send some meta-messages to observables (e.g., `Chunk`) to control the way they produce values. These values we use are in the domain (which is infinite) of the values that the observable could produce. This should be fixed to a seperate meta-layer of the observable. We could send `{:meta, <cmd>}` to the observable, because that can not be mixed with `{:event, <value>}`.

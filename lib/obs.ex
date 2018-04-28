@@ -11,7 +11,8 @@ defmodule Observables.Obs do
     Each,
     Filter,
     StartsWith,
-    Buffer
+    Buffer,
+    Chunk
   }
 
   alias Enum
@@ -255,6 +256,29 @@ defmodule Observables.Obs do
   end
 
   @doc """
+  Chunks items produces by the observable together bounded in time. 
+  As soon as the set delay has been passed, the observable emits an enumerable
+  with the elements gathered up to that point. Does not emit the empty list.
+
+  Works in the same vein as the buffer observable, but that one is bound by number,
+  and not by time.
+
+  Source: http://reactivex.io/documentation/operators/buffer.html
+  """
+  def chunk({observable_fn, _parent_pid}, interval) do
+    {:ok, pid} = GenObservable.start_link(Chunk, [interval])
+
+    observable_fn.(pid)
+
+    Process.send_after(pid, {:event, :flush}, interval)
+
+    # Create the continuation.
+    {fn observer ->
+       GenObservable.send_to(pid, observer)
+     end, pid}
+  end
+
+  @doc """
   Periodically gather items emitted by an Observable into bundles of size `size` and emit
   these bundles rather than emitting the items one at a time.
 
@@ -267,8 +291,8 @@ defmodule Observables.Obs do
 
     # Create the continuation.
     {fn observer ->
-      GenObservable.send_to(pid, observer)
-    end, pid}
+       GenObservable.send_to(pid, observer)
+     end, pid}
   end
 
   # TERMINATORS ##################################################################
@@ -293,5 +317,4 @@ defmodule Observables.Obs do
       v
     end)
   end
-
 end
