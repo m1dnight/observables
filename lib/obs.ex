@@ -21,7 +21,19 @@ defmodule Observables.Obs do
   # GENERATORS ###################################################################
 
   @doc """
-  from_pid/1 can be considered to be a subject. Any process that implements
+  from_pid/1 can be considered to be a subject. Any process that implements the GenObservable interface can be used a subject, actually.
+  Example:
+  Spawn a subject using the `Subject` module.
+  {:ok, pid1} = GenObservable.spawn_supervised(Subject, 0)
+
+  Print out each value that the subject produces.
+  Obs.from_pid(pid1)
+  |> Obs.print()
+
+  Send an event to the subject.
+  GenObservable.send_event(pid1, :value)
+
+  More information: http://reactivex.io/documentation/subject.html
   """
   def from_pid(producer) do
     {fn consumer ->
@@ -30,8 +42,11 @@ defmodule Observables.Obs do
   end
 
   @doc """
-  Takes an enumerable and will "spit" each value one by one, every delay seconds.
+  Takes an enumerable and turns it into an observable that produces a value
+  for each value of the enumerable.
   If the enum is consumed, returns done.
+
+  More information: http://reactivex.io/documentation/operators/from.html
   """
   def from_enum(coll, delay \\ 1000) do
     {:ok, pid} = GenObservable.start(FromEnum, [coll, delay])
@@ -47,6 +62,8 @@ defmodule Observables.Obs do
   Range creates an observable that will start at the given integer and run until the last integer.
   If no second argument is given, the stream is infinite.
   One can use :infinity as the end for an infinite stream (see: https://elixirforum.com/t/infinity-in-elixir-erlang/7396)
+
+  More information: http://reactivex.io/documentation/operators/range.html
   """
   def range(first, last, delay \\ 1000) do
     {:ok, pid} = GenObservable.start(Range, [first, last, delay])
@@ -61,6 +78,8 @@ defmodule Observables.Obs do
   @doc """
   repeat takes a function as argument and an optional interval.
   The function will be repeatedly executed, and the result will be emitted as an event.
+
+  More information: http://reactivex.io/documentation/operators/repeat.html
   """
   def repeat(f, opts \\ []) do
     interval = Keyword.get(opts, :interval, 1000)
@@ -74,6 +93,12 @@ defmodule Observables.Obs do
 
   # CONSUMER AND PRODUCER ########################################################
 
+  @doc """
+  Combine the emissions of multiple Observables together via a specified function 
+  and emit single items for each combination based on the results of this function.
+
+  More information: http://reactivex.io/documentation/operators/zip.html
+  """
   def zip(l, r) do
     # We tag each value from left and right with their respective label.
     {f_l, _pid_l} =
@@ -97,6 +122,12 @@ defmodule Observables.Obs do
      end, pid}
   end
 
+  @doc """
+  Combine two observables into a single observable that will emit the events 
+  produced by the inputs.
+
+  More information: http://reactivex.io/documentation/operators/merge.html
+  """
   def merge({observable_fn_1, _parent_pid_1}, {observable_fn_2, _parent_pid_2}) do
     {:ok, pid} = GenObservable.start_link(Merge, [])
 
@@ -109,6 +140,11 @@ defmodule Observables.Obs do
      end, pid}
   end
 
+  @doc """
+  Applies a given function to each value produces by the dependency observable.
+
+  More information: http://reactivex.io/documentation/operators/map.html
+  """
   def map({observable_fn, _parent_pid}, f) do
     {:ok, pid} = GenObservable.start_link(Map, [f])
 
@@ -120,6 +156,15 @@ defmodule Observables.Obs do
      end, pid}
   end
 
+  @doc """
+  Filters out values that have already been produced by any given observable.
+  Uses the default `==` function if none is given. 
+
+  The expected function should take 2 arguments, and return a boolean indication
+  the equality.
+
+  More information: http://reactivex.io/documentation/operators/distinct.html
+  """
   def distinct({observable_fn, _parent_pid}, f \\ fn x, y -> x == y end) do
     {:ok, pid} = GenObservable.start_link(Distinct, [f])
 
@@ -131,6 +176,11 @@ defmodule Observables.Obs do
      end, pid}
   end
 
+  @doc """
+  Same as map, but returns the original value. Typically used for side effects.
+
+  More information: http://reactivex.io/documentation/operators/subscribe.html
+  """
   def each({observable_fn, _parent_pid}, f) do
     {:ok, pid} = GenObservable.start_link(Each, [f])
 
@@ -142,6 +192,14 @@ defmodule Observables.Obs do
      end, pid}
   end
 
+  @doc """
+  Filters out the values that do not satisfy the given predicate. 
+
+  The expection function should take 1 arguments and return a boolean value. 
+  True if the value should be produced, false if the value should be discarded.
+
+  More information: http://reactivex.io/documentation/operators/filter.html
+  """
   def filter({observable_fn, _parent_pid}, f) do
     {:ok, pid} = GenObservable.start_link(Filter, [f])
     observable_fn.(pid)
@@ -151,6 +209,11 @@ defmodule Observables.Obs do
      end, pid}
   end
 
+  @doc """
+  Prepends any observable with a list of values provided here in the form of a list.
+
+  More information: http://reactivex.io/documentation/operators/startwith.html
+  """
   def starts_with({observable_fn, _parent_pid}, start_vs) do
     # Start the producer/consumer server.
     {:ok, pid} = GenObservable.start_link(StartsWith, [])
@@ -173,6 +236,12 @@ defmodule Observables.Obs do
      end, pid}
   end
 
+  @doc """
+  Convert an Observable that emits Observables into a single Observable that 
+  emits the items emitted by the most-recently-emitted of those Observables.
+
+  More information: http://reactivex.io/documentation/operators/switch.html
+  """
   def switch({observable_fn, _parent_pid}) do
     # Start the producer/consumer server.
     {:ok, pid} = GenObservable.start_link(Switch, [])
@@ -204,6 +273,10 @@ defmodule Observables.Obs do
 
   # TERMINATORS ##################################################################
 
+  @doc """
+  Prints out the values produces by this observable. Keep in mind that this only works
+  for values that are actually printable. If not sure, use inspect/1 instead.
+  """
   def print({observable_fn, parent_pid}) do
     map({observable_fn, parent_pid}, fn v ->
       IO.puts(v)
@@ -211,6 +284,9 @@ defmodule Observables.Obs do
     end)
   end
 
+  @doc """
+  Same as the print/1 function, but uses inspect to print instead of puts.
+  """
   def inspect({observable_fn, parent_pid}) do
     map({observable_fn, parent_pid}, fn v ->
       IO.inspect(v)
@@ -218,7 +294,4 @@ defmodule Observables.Obs do
     end)
   end
 
-  # def to_list({observable_fn, parent_pid}) do
-  #   # Create a proxy observable, that will send all the values to us.
-  # end
 end
