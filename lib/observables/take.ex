@@ -9,11 +9,10 @@ defmodule Observables.Take do
   end
 
   def handle_event(v, state = %{:n => n}) do
-
     case n do
       n when n <= 0 -> {:done, state}
       1 -> {:done, v, state}
-      n -> {:value, v, %{:n => (n - 1)}}
+      n -> {:value, v, %{:n => n - 1}}
     end
   end
 

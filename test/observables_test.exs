@@ -480,14 +480,31 @@ defmodule ObservablesTest do
   test "Combine Latest" do
     testproc = self()
 
-    Obs.combinelatest(Obs.range(1, 10, 1000), Obs.range(11, 20, 2000))
+    xs = Obs.range(1, 3, 900)
+    ys = Obs.range(11, 15, 3000)
+
+    Obs.combinelatest(xs, ys)
+    |> Obs.inspect()
     |> Obs.map(fn v -> send(testproc, v) end)
 
-    [1..100]
+    [{3, 11}, {3, 12}, {3, 13}, {3, 14}, {3, 15}]
     |> Enum.map(fn x ->
       receive do
         ^x -> Logger.debug("Got #{inspect(x)}")
+      after
+        5000 ->
+          assert "did not get expected value #{inspect(x)}"
       end
     end)
+
+    # Receive no other values.
+    receive do
+      x ->
+        Logger.error("Received another value, did not want")
+        assert "received another value: #{inspect(x, charlists: :as_lists)} " == ""
+    after
+      1000 ->
+        :ok
+    end
   end
 end

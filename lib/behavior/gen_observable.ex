@@ -170,7 +170,8 @@ defmodule Observables.GenObservable do
         {:noreply, %{state | state: s}}
 
       {:done, value, s} ->
-        cast(self(), {:notify_all, value}) # We are done, but produced a final value.
+        # We are done, but produced a final value.
+        cast(self(), {:notify_all, value})
         cast(self(), :stop)
         {:noreply, %{state | state: s}}
 

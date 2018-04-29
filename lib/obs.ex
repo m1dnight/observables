@@ -307,7 +307,7 @@ defmodule Observables.Obs do
 
   More information: http://reactivex.io/documentation/operators/scan.html
   """
-  def scan({observable_fn, parent_pid}, f) do
+  def scan({observable_fn, _parent_pid}, f) do
     {:ok, pid} = GenObservable.start_link(Scan, [f])
 
     observable_fn.(pid)
@@ -320,7 +320,7 @@ defmodule Observables.Obs do
 
   @doc """
   Takes the n first element of the observable, and then stops.
-  
+
   More information: http://reactivex.io/documentation/operators/take.html
   """
   def take({observable_fn, parent_pid}, n) do
@@ -350,10 +350,12 @@ defmodule Observables.Obs do
     # We tag each value from left and right with their respective label.
     {f_l, _pid_l} =
       l
+      |> Observables.Obs.inspect()
       |> map(fn v -> {:left, v} end)
 
     {f_r, _pid_r} =
       r
+      |> Observables.Obs.inspect()
       |> map(fn v -> {:right, v} end)
 
     # Start our zipper observable.
@@ -368,7 +370,6 @@ defmodule Observables.Obs do
        GenObservable.send_to(pid, observer)
      end, pid}
   end
-
 
   # TERMINATORS ##################################################################
 

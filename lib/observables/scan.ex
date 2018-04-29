@@ -12,11 +12,11 @@ defmodule Observables.Scan do
     case i do
       nil ->
         {:value, v, %{:proc => proc, :intermediate => v}}
+
       x ->
         res = proc.(v, x)
         {:value, res, %{:proc => proc, :intermediate => res}}
     end
-    
   end
 
   def handle_done(pid, _state) do
