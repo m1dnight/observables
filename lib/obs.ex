@@ -13,7 +13,8 @@ defmodule Observables.Obs do
     StartsWith,
     Buffer,
     Chunk,
-    Scan
+    Scan,
+    Take
   }
 
   alias Enum
@@ -315,6 +316,24 @@ defmodule Observables.Obs do
        GenObservable.send_to(pid, observer)
      end, pid}
   end
+
+  @doc """
+  Takes the n first element of the observable, and then stops.
+  
+  More information: http://reactivex.io/documentation/operators/take.html
+  """
+  def take({observable_fn, parent_pid}, n) do
+    {:ok, pid} = GenObservable.start_link(Take, [n])
+
+    observable_fn.(pid)
+
+    # Creat the continuation.
+    {fn observer ->
+       GenObservable.send_to(pid, observer)
+     end, pid}
+  end
+
+
   # TERMINATORS ##################################################################
 
   @doc """

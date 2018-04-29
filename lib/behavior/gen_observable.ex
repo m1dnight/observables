@@ -169,6 +169,11 @@ defmodule Observables.GenObservable do
         GenServer.cast(self(), {:event, value})
         {:noreply, %{state | state: s}}
 
+      {:done, value, s} ->
+        cast(self(), {:notify_all, value}) # We are done, but produced a final value.
+        cast(self(), :stop)
+        {:noreply, %{state | state: s}}
+
       {:done, s} ->
         cast(self(), :stop)
         {:noreply, %{state | state: s}}
