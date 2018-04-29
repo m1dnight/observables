@@ -230,6 +230,13 @@ defmodule Observables.GenObservable do
     cast(producer, {:delay, delay})
   end
 
+  @doc """
+  Makes an observable stop and gracefully shut down.
+  """
+  def stop(producer, reason \\ :normal) do
+    cast(producer, {:stop, reason})
+  end
+
   ###########
   # Helpers #
   ###########

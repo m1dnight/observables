@@ -14,7 +14,8 @@ defmodule Observables.Obs do
     Buffer,
     Chunk,
     Scan,
-    Take
+    Take,
+    CombineLatest
   }
 
   alias Enum
@@ -326,6 +327,41 @@ defmodule Observables.Obs do
     {:ok, pid} = GenObservable.start_link(Take, [n])
 
     observable_fn.(pid)
+
+    # Creat the continuation.
+    {fn observer ->
+       GenObservable.send_to(pid, observer)
+     end, pid}
+  end
+
+  @doc """
+  Given two observables, merges them together and always merges the last result of on of both, and
+  reuses the last value from the other.
+
+  E.g.
+  1 -> 2 ------> 3
+  A -----> B ------> C 
+  =
+  1A --> 2A -> 2B -> 3B -> 3C
+
+  More information: http://reactivex.io/documentation/operators/combinelatest.html
+  """
+  def combinelatest(l, r) do
+    # We tag each value from left and right with their respective label.
+    {f_l, _pid_l} =
+      l
+      |> map(fn v -> {:left, v} end)
+
+    {f_r, _pid_r} =
+      r
+      |> map(fn v -> {:right, v} end)
+
+    # Start our zipper observable.
+    {:ok, pid} = GenObservable.start(CombineLatest, [])
+
+    # Make left and right send to us.
+    f_l.(pid)
+    f_r.(pid)
 
     # Creat the continuation.
     {fn observer ->

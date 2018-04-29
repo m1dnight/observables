@@ -4,14 +4,12 @@ defmodule ObservablesTest do
   require Logger
 
   def sleep(ms) do
-
     receive do
       :nevergonnahappen -> :ok
     after
       ms -> :ok
     end
   end
-
 
   test "Test from pid" do
     testproc = self()
@@ -307,9 +305,13 @@ defmodule ObservablesTest do
   test "repeat" do
     testproc = self()
 
-    Obs.repeat(fn ->
-      send(testproc, :hello)
-    end, [interval: 500, times: 5])
+    Obs.repeat(
+      fn ->
+        send(testproc, :hello)
+      end,
+      interval: 500,
+      times: 5
+    )
 
     [:hello, :hello, :hello, :hello, :hello]
     |> Enum.map(fn x ->
@@ -342,16 +344,17 @@ defmodule ObservablesTest do
     Obs.range(start, tend, 100)
     |> Obs.buffer(size)
     |> Obs.each(fn v ->
-      Logger.debug "Sending #{inspect v}"
+      Logger.debug("Sending #{inspect(v)}")
       send(testproc, v)
     end)
 
     # Receive all the values.
     Enum.chunk_every(1..100, size)
     |> Enum.map(fn list ->
-      Logger.debug "Waiting for #{inspect list}"
+      Logger.debug("Waiting for #{inspect(list)}")
+
       receive do
-        ^list -> Logger.debug "Got list #{inspect list}"
+        ^list -> Logger.debug("Got list #{inspect(list)}")
       end
     end)
 
@@ -376,21 +379,23 @@ defmodule ObservablesTest do
 
     # Create a range.
     Obs.range(start, tend, 100)
-    |> Obs.chunk(size * 100 + 10) # We should consume 5 values each time.
+    # We should consume 5 values each time.
+    |> Obs.chunk(size * 100 + 10)
     |> Obs.each(fn v ->
-      Logger.debug "Sending #{inspect v, charlists: :as_lists}"
+      Logger.debug("Sending #{inspect(v, charlists: :as_lists)}")
       send(testproc, v)
     end)
 
     # Receive all the values.
     Enum.chunk_every(1..50, size)
     |> Enum.map(fn list ->
-      Logger.debug "Waiting for #{inspect list, charlists: :as_lists}"
+      Logger.debug("Waiting for #{inspect(list, charlists: :as_lists)}")
+
       receive do
-        ^list -> Logger.debug "Got list #{inspect list, charlists: :as_lists}"
+        ^list -> Logger.debug("Got list #{inspect(list, charlists: :as_lists)}")
       after
         10000 ->
-          assert "Did not receive list in time: #{inspect list, charlists: :as_lists}" == ""
+          assert "Did not receive list in time: #{inspect(list, charlists: :as_lists)}" == ""
       end
     end)
 
@@ -398,13 +403,12 @@ defmodule ObservablesTest do
     receive do
       x ->
         Logger.error("Received another value, did not want")
-        assert "received another value: #{inspect x, charlists: :as_lists} " == ""
+        assert "received another value: #{inspect(x, charlists: :as_lists)} " == ""
     after
       1000 ->
         :ok
     end
   end
-
 
   @tag :scan
   test "scan" do
@@ -415,20 +419,20 @@ defmodule ObservablesTest do
 
     # Create a range.
     Obs.range(start, tend, 100)
-    |> Obs.scan(fn (x,y) -> x + y end)
+    |> Obs.scan(fn x, y -> x + y end)
     |> Obs.each(fn v ->
-      Logger.debug "Sending #{inspect v, charlists: :as_lists}"
+      Logger.debug("Sending #{inspect(v, charlists: :as_lists)}")
       send(testproc, v)
     end)
 
     # Receive all the values.
-    Enum.scan(1..50, fn(x,y) -> x + y end)
+    Enum.scan(1..50, fn x, y -> x + y end)
     |> Enum.map(fn v ->
       receive do
         ^v -> :ok
       after
         10000 ->
-          assert "Did not receive item in time: #{inspect v}" == ""
+          assert "Did not receive item in time: #{inspect(v)}" == ""
       end
     end)
 
@@ -436,7 +440,7 @@ defmodule ObservablesTest do
     receive do
       x ->
         Logger.error("Received another value, did not want")
-        assert "received another value: #{inspect x, charlists: :as_lists} " == ""
+        assert "received another value: #{inspect(x, charlists: :as_lists)} " == ""
     after
       1000 ->
         :ok
@@ -447,31 +451,43 @@ defmodule ObservablesTest do
   test "Take" do
     testproc = self()
 
-    xs = [1,2,3,4,5,6,7,8,9,0]
+    xs = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
 
     xs
     |> Obs.from_enum(100)
     |> Obs.take(4)
     |> Obs.map(fn v -> send(testproc, v) end)
 
-    [1,2,3,4]
+    [1, 2, 3, 4]
     |> Enum.map(fn x ->
       receive do
         ^x -> :ok
       end
     end)
-    
+
     # Receive no other values.
     receive do
       x ->
         Logger.error("Received another value, did not want")
-        assert "received another value: #{inspect x, charlists: :as_lists} " == ""
+        assert "received another value: #{inspect(x, charlists: :as_lists)} " == ""
     after
       1000 ->
         :ok
     end
-
   end
 
+  @tag :combinelatest
+  test "Combine Latest" do
+    testproc = self()
 
+    Obs.combinelatest(Obs.range(1, 10, 1000), Obs.range(11, 20, 2000))
+    |> Obs.map(fn v -> send(testproc, v) end)
+
+    [1..100]
+    |> Enum.map(fn x ->
+      receive do
+        ^x -> Logger.debug("Got #{inspect(x)}")
+      end
+    end)
+  end
 end
