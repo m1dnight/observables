@@ -487,7 +487,7 @@ defmodule ObservablesTest do
     {:ok, pid2} = GenObservable.spawn_supervised(Observables.Subject)
     ys = Obs.from_pid(pid2)
 
-    Obs.combinelatest(xs, ys)
+    Obs.combinelatest(xs, ys, [left: nil, right: nil])
     |> Obs.inspect()
     |> Obs.map(fn v -> send(testproc, v) end)
 
@@ -519,6 +519,44 @@ defmodule ObservablesTest do
       x -> flunk "Mailbox was supposed to be empty, got: #{inspect x}"
     after 
       0 -> :ok
+    end
+  end
+
+
+  @tag :combinelatestsilent
+  test "Combine Latest Silent" do
+    testproc = self()
+
+    xs = Obs.range(1, 3, 500)
+    ys = Obs.range(11, 15, 1200)
+
+    # 1      2      3     
+    # 11          12     13     14     15
+    # ===================================
+    # 1/11   2/11   3/12          
+
+    Obs.combineLatestSilent(xs, ys, [left: nil, right: nil, silent: :right])
+    |> Obs.inspect()
+    |> Obs.map(fn v -> send(testproc, v) end)
+
+    [{2, 11}, {2, 11}, {3, 12}]
+    |> Enum.map(fn x ->
+      receive do
+        ^x -> Logger.debug("Got #{inspect(x)}")
+      after
+        5000 ->
+          assert "did not get expected value #{inspect(x)}"
+      end
+    end)
+
+    # Receive no other values.
+    receive do
+      x ->
+        Logger.error("Received another value, did not want")
+        assert "received another value: #{inspect(x, charlists: :as_lists)} " == ""
+    after
+      1000 ->
+        :ok
     end
   end
 end
