@@ -480,31 +480,45 @@ defmodule ObservablesTest do
   test "Combine Latest" do
     testproc = self()
 
-    xs = Obs.range(1, 3, 900)
-    ys = Obs.range(11, 15, 3000)
+    
+    {:ok, pid1} = GenObservable.spawn_supervised(Observables.Subject)
+    xs = Obs.from_pid(pid1)
+
+    {:ok, pid2} = GenObservable.spawn_supervised(Observables.Subject)
+    ys = Obs.from_pid(pid2)
 
     Obs.combinelatest(xs, ys)
     |> Obs.inspect()
     |> Obs.map(fn v -> send(testproc, v) end)
 
-    [{3, 11}, {3, 12}, {3, 13}, {3, 14}, {3, 15}]
-    |> Enum.map(fn x ->
-      receive do
-        ^x -> Logger.debug("Got #{inspect(x)}")
-      after
-        5000 ->
-          assert "did not get expected value #{inspect(x)}"
-      end
-    end)
+    # Send first value, should not produce.
+    GenObservable.send_event(pid1, :x0)
 
-    # Receive no other values.
     receive do
-      x ->
-        Logger.error("Received another value, did not want")
-        assert "received another value: #{inspect(x, charlists: :as_lists)} " == ""
-    after
-      1000 ->
-        :ok
+      x -> flunk "Mailbox was supposed to be empty, got: #{inspect x}"
+    after 
+      0 -> :ok
+    end
+
+    # Send second value, should produce.
+    GenObservable.send_event(pid2, :y0)
+    assert_receive({:x0, :y0}, 1000, "did not get this message!")
+
+    # Update the left observable. Shoudl produce with history.
+    GenObservable.send_event(pid1, :x1)
+    assert_receive({:x1, :y0}, 1000, "did not get this message!")
+
+    GenObservable.send_event(pid2, :y1)
+    assert_receive({:x1, :y1}, 1000, "did not get this message!")
+
+    # Send a final value, should produce.
+    GenObservable.send_event(pid1, :xfinal)
+    assert_receive({:xfinal, :y1}, 1000, "did not get this message!")
+
+    receive do
+      x -> flunk "Mailbox was supposed to be empty, got: #{inspect x}"
+    after 
+      0 -> :ok
     end
   end
 end

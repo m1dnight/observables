@@ -51,7 +51,7 @@ defmodule Observables.GenObservable do
     GenServer.start(__MODULE__, {module, args}, options)
   end
 
-  def spawn_supervised(module, args) do
+  def spawn_supervised(module, args \\ []) do
     Observables.Supervisor.add_child(__MODULE__, [module, args])
   end
 
