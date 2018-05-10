@@ -307,8 +307,8 @@ defmodule Observables.Obs do
 
   More information: http://reactivex.io/documentation/operators/scan.html
   """
-  def scan({observable_fn, _parent_pid}, f) do
-    {:ok, pid} = GenObservable.start_link(Scan, [f])
+  def scan({observable_fn, _parent_pid}, f, default \\ nil) do
+    {:ok, pid} = GenObservable.start_link(Scan, [f, default])
 
     observable_fn.(pid)
 

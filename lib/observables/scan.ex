@@ -2,10 +2,10 @@ defmodule Observables.Scan do
   @moduledoc false
   use Observables.GenObservable
 
-  def init([proc]) do
+  def init([proc, default]) do
     Logger.debug("Scan: #{inspect(self())}")
     # We don't keep state in merge.
-    {:ok, %{:proc => proc, :intermediate => nil}}
+    {:ok, %{:proc => proc, :intermediate => default}}
   end
 
   def handle_event(v, %{:proc => proc, :intermediate => i}) do
