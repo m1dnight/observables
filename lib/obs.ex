@@ -15,7 +15,8 @@ defmodule Observables.Obs do
     Chunk,
     Scan,
     Take,
-    CombineLatest
+    CombineLatest,
+    CombineLatestSilent
   }
 
   alias Enum
@@ -363,6 +364,51 @@ defmodule Observables.Obs do
 
     # Start our zipper observable.
     {:ok, pid} = GenObservable.start(CombineLatest, [left_initial, right_initial])
+
+    # Make left and right send to us.
+    f_l.(pid)
+    f_r.(pid)
+
+    # Creat the continuation.
+    {fn observer ->
+       GenObservable.send_to(pid, observer)
+     end, pid}
+  end
+
+  @doc """
+  Given two observables, merges them together and always merges the last result of on of both, and
+  reuses the last value from the other. 
+
+  The nuance with combinelatest here is that one of both observables will not trigger an update, 
+  but will update silently.
+
+
+  E.g.
+  1 -> 2 ------> 3
+  A -----> B ------> C 
+  =
+  1A --> 2A ----> 3B
+
+  More information: http://reactivex.io/documentation/operators/combinelatest.html
+  """
+  def combineLatestSilent(l, r, opts \\ [left: nil, right: nil, silent: :right]) do
+    left_initial = Keyword.get(opts, :left, nil)
+    right_initial = Keyword.get(opts, :right, nil)
+    left_initial = Keyword.get(opts, :silent, :right)
+
+    # We tag each value from left and right with their respective label.
+    {f_l, _pid_l} =
+      l
+      |> Observables.Obs.inspect()
+      |> map(fn v -> {:left, v} end)
+
+    {f_r, _pid_r} =
+      r
+      |> Observables.Obs.inspect()
+      |> map(fn v -> {:right, v} end)
+
+    # Start our zipper observable.
+    {:ok, pid} = GenObservable.start(CombineLatestSilent, [left_initial, right_initial, :left])
 
     # Make left and right send to us.
     f_l.(pid)
