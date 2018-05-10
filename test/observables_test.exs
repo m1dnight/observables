@@ -10,10 +10,10 @@ defmodule ObservablesTest do
       ms -> :ok
     end
   end
-
+  @tag :frompid
   test "Test from pid" do
     testproc = self()
-    {:ok, pid1} = GenObservable.spawn_supervised(Subject, 0)
+    {:ok, pid1} = GenObservable.spawn_supervised(Observables.Subject, 0)
 
     Obs.from_pid(pid1)
     |> Obs.map(fn v -> send(testproc, :ok) end)
@@ -215,7 +215,7 @@ defmodule ObservablesTest do
   test "switch" do
     testproc = self()
 
-    {:ok, pid} = GenObservable.spawn_supervised(Subject, 0)
+    {:ok, pid} = GenObservable.spawn_supervised(Observables.Subject, 0)
 
     Obs.from_pid(pid)
     |> Obs.switch()

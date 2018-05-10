@@ -2,9 +2,9 @@ defmodule Observables.CombineLatest do
   @moduledoc false
   use Observables.GenObservable
 
-  def init([]) do
+  def init([left_initial, right_initial]) do
     Logger.debug("CombineLatest: #{inspect(self())}")
-    {:ok, {:left, nil, :right, nil}}
+    {:ok, {:left, left_initial, :right, right_initial}}
   end
 
   def handle_event(value, state) do
