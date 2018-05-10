@@ -391,10 +391,10 @@ defmodule Observables.Obs do
 
   More information: http://reactivex.io/documentation/operators/combinelatest.html
   """
-  def combineLatestSilent(l, r, opts \\ [left: nil, right: nil, silent: :right]) do
+  def combinelatestsilent(l, r, opts \\ [left: nil, right: nil, silent: :right]) do
     left_initial = Keyword.get(opts, :left, nil)
     right_initial = Keyword.get(opts, :right, nil)
-    left_initial = Keyword.get(opts, :silent, :right)
+    silent = Keyword.get(opts, :silent, :right)
 
     # We tag each value from left and right with their respective label.
     {f_l, _pid_l} =
@@ -408,7 +408,7 @@ defmodule Observables.Obs do
       |> map(fn v -> {:right, v} end)
 
     # Start our zipper observable.
-    {:ok, pid} = GenObservable.start(CombineLatestSilent, [left_initial, right_initial, :left])
+    {:ok, pid} = GenObservable.start(CombineLatestSilent, [left_initial, right_initial, silent])
 
     # Make left and right send to us.
     f_l.(pid)
