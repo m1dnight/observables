@@ -1,4 +1,4 @@
-defmodule Subject do 
+defmodule Observables.Subject do 
     alias Observables.GenObservable 
 
     @moduledoc """
