@@ -1,6 +1,6 @@
 defmodule ZipTest do
   use ExUnit.Case
-  alias Observables.{Obs, GenObservable}
+  alias Observables.{Obs}
   require Logger
 
   @tag :zip

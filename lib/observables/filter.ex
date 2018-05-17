@@ -1,4 +1,4 @@
-defmodule Observables.Filter do
+defmodule Observables.Operator.Filter do
   @moduledoc false
   use Observables.GenObservable
 

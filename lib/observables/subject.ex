@@ -1,4 +1,4 @@
-defmodule Observables.Subject do
+defmodule Observables.Operator.Subject do
   @moduledoc false
   use Observables.GenObservable
   require Logger

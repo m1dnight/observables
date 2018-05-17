@@ -1,4 +1,4 @@
-defmodule Observables.StartsWith do
+defmodule Observables.Operator.StartsWith do
   @moduledoc false
   use Observables.GenObservable
 

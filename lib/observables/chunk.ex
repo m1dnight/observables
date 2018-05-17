@@ -1,4 +1,4 @@
-defmodule Observables.Chunk do
+defmodule Observables.Operator.Chunk do
   @moduledoc false
   use Observables.GenObservable
 
@@ -15,7 +15,7 @@ defmodule Observables.Chunk do
       [] ->
         {:novalue, %{:interval => interval, :buffer => []}}
 
-      xs ->
+      _xs ->
         {:value, bs, %{:interval => interval, :buffer => []}}
     end
   end

@@ -1,4 +1,4 @@
-defmodule Observables.Range do
+defmodule Observables.Operator.Range do
   @moduledoc false
   use Observables.GenObservable
 

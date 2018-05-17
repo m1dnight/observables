@@ -1,6 +1,6 @@
 defmodule EachTest do
   use ExUnit.Case
-  alias Observables.{Obs, GenObservable}
+  alias Observables.{Obs}
   require Logger
 
   @tag :each
@@ -22,7 +22,7 @@ defmodule EachTest do
     end)
 
     receive do
-      x ->
+      _x ->
         Logger.error("Received another value, did not want")
         assert 5 == 10
     after

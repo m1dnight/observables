@@ -1,4 +1,4 @@
-defmodule Observables.Each do
+defmodule Observables.Operator.Each do
   @moduledoc false
   use Observables.GenObservable
 

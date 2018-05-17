@@ -1,4 +1,4 @@
-defmodule Observables.Scan do
+defmodule Observables.Operator.Scan do
   @moduledoc false
   use Observables.GenObservable
 

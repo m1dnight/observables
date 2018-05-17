@@ -1,4 +1,4 @@
-defmodule Observables.Map do
+defmodule Observables.Operator.Map do
   @moduledoc false
   use Observables.GenObservable
 

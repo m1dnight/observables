@@ -1,4 +1,4 @@
-defmodule Observables.Take do
+defmodule Observables.Operator.Take do
   @moduledoc false
   use Observables.GenObservable
 

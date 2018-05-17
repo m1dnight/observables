@@ -1,4 +1,4 @@
-defmodule Observables.Switch do
+defmodule Observables.Operator.Switch do
   @moduledoc false
   use Observables.GenObservable
   alias Observables.GenObservable

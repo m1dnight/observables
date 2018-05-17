@@ -1,6 +1,6 @@
 defmodule RangeTest do
   use ExUnit.Case
-  alias Observables.{Obs, GenObservable}
+  alias Observables.{Obs}
   require Logger
 
   @tag :range
@@ -11,7 +11,7 @@ defmodule RangeTest do
     |> Obs.map(fn x -> send(testproc, x) end)
 
     1..5
-    |> Enum.map(fn x ->
+    |> Enum.map(fn _x ->
       receive do
         v -> Logger.debug("Got #{v}")
       end

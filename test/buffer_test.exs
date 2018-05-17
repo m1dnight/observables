@@ -1,6 +1,6 @@
 defmodule BufferTest do
   use ExUnit.Case
-  alias Observables.{Obs, GenObservable}
+  alias Observables.{Obs}
   require Logger
 
   @tag :buffer
@@ -31,7 +31,7 @@ defmodule BufferTest do
 
     # Receive no other values.
     receive do
-      x ->
+      _x ->
         Logger.error("Received another value, did not want")
         assert "received another value:" == ""
     after

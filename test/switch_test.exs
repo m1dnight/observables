@@ -1,6 +1,6 @@
 defmodule SwitchTest do
   use ExUnit.Case
-  alias Observables.{Obs, GenObservable}
+  alias Observables.{Obs}
   require Logger
 
   @tag :switch
@@ -8,9 +8,9 @@ defmodule SwitchTest do
     Code.load_file("test/util.ex")
     testproc = self()
 
-    {:ok, pid} = GenObservable.spawn_supervised(Observables.Subject, 0)
+    s = Observables.Subject.create()
 
-    Obs.from_pid(pid)
+    s
     |> Obs.switch()
     |> Obs.map(fn v -> send(testproc, v) end)
 
@@ -20,7 +20,7 @@ defmodule SwitchTest do
       |> Obs.from_enum()
 
     Logger.debug("Setting new observable x")
-    GenObservable.send_event(pid, x)
+    Observables.Subject.next(s, x)
     Test.Util.sleep(10000)
 
     y =
@@ -29,10 +29,10 @@ defmodule SwitchTest do
       |> Obs.from_enum()
 
     Logger.debug("Setting new observable y")
-    GenObservable.send_event(pid, y)
+    Observables.Subject.next(s, y)
 
     1..10
-    |> Enum.map(fn x ->
+    |> Enum.map(fn _x ->
       receive do
         v -> Logger.debug("Got #{v}")
       end

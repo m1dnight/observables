@@ -1,4 +1,4 @@
-defmodule Observables.CombineLatest do
+defmodule Observables.Operator.CombineLatest do
   @moduledoc false
   use Observables.GenObservable
 

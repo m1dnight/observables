@@ -1,4 +1,4 @@
-defmodule Observables.FromEnum do
+defmodule Observables.Operator.FromEnum do
   @moduledoc false
   use Observables.GenObservable
 

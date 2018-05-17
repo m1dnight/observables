@@ -1,4 +1,4 @@
-defmodule Observables.ToList do
+defmodule Observables.Operator.ToList do
   @moduledoc false
   use Observables.GenObservable
 

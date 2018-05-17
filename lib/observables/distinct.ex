@@ -1,4 +1,4 @@
-defmodule Observables.Distinct do
+defmodule Observables.Operator.Distinct do
   @moduledoc false
   use Observables.GenObservable
 

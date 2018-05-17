@@ -1,4 +1,4 @@
-defmodule Observables.Merge do
+defmodule Observables.Operator.Merge do
   @moduledoc false
   use Observables.GenObservable
 

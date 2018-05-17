@@ -1,6 +1,6 @@
 defmodule SubjectTest do
   use ExUnit.Case
-  alias Observables.{Obs, GenObservable}
+  alias Observables.{Obs, Subject}
   require Logger
 
   @tag :subject
@@ -14,7 +14,6 @@ defmodule SubjectTest do
     # Print out all the values that this subject produces,
     # and forward them to the testproc.
     s
-    |> Obs.each(fn v -> IO.puts("Subject produced #{v}") end)
     |> Obs.each(fn v -> send(testproc, {:test, v}) end)
 
     # Send some values to the subject, and make sure we receive them.

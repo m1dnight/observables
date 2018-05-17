@@ -1,7 +1,7 @@
 defmodule Observables.Obs do
-  alias Observables.{
+  alias Observables.GenObservable
+  alias Observables.Operator.{
     Switch,
-    GenObservable,
     FromEnum,
     Range,
     Zip,
@@ -324,7 +324,7 @@ defmodule Observables.Obs do
 
   More information: http://reactivex.io/documentation/operators/take.html
   """
-  def take({observable_fn, parent_pid}, n) do
+  def take({observable_fn, _parent_pid}, n) do
     {:ok, pid} = GenObservable.start_link(Take, [n])
 
     observable_fn.(pid)
