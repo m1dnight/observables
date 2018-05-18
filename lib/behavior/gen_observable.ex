@@ -186,6 +186,20 @@ defmodule Observables.GenObservable do
     {:noreply, state}
   end
 
+  def handle_cast(:unsubscribe, state) do
+    # First notify all our dependees that we no longer want their data.
+    # This has as a side effect qwe no longer listen to them as well.
+    state.listeningto
+    |> Enum.map(fn producer ->
+      stop_send_to(producer, self())
+    end)
+
+    # Now it should be safe to stop.
+    GenObservable.stop(self())
+
+    {:noreply, state}
+  end
+
   def handle_info({:event, value}, state) do
     cast(self(), {:event, value})
     {:noreply, state}
@@ -235,7 +249,15 @@ defmodule Observables.GenObservable do
   Makes an observable stop and gracefully shut down.
   """
   def stop(producer, reason \\ :normal) do
-    cast(producer, {:stop, reason})
+    #cast(producer, {:stop, reason})
+    cast(producer, :stop)
+  end
+
+  @doc """
+  Unsubscribes ourself from all our dependencies.
+  """
+  def unsubscribe(producer) do
+    cast(producer, :unsubscribe)
   end
 
   ###########
