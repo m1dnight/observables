@@ -6,14 +6,14 @@ defmodule UnsubscribeTest do
   @tag :unsubscribe
   test "ubsubscribe" do
     Code.load_file("test/util.ex")
-    
+
     testproc = self()
 
     Obs.range(1, :infinity, 500)
     |> Obs.map(fn v ->
       if v > 5 do
         Observables.Observable.unsubscribe()
-      else 
+      else
         send(testproc, v)
       end
     end)

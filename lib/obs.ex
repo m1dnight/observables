@@ -16,7 +16,8 @@ defmodule Observables.Obs do
     Scan,
     Take,
     CombineLatest,
-    CombineLatestSilent
+    CombineLatestSilent,
+    Delay
   }
 
   alias Enum
@@ -415,6 +416,21 @@ defmodule Observables.Obs do
     f_r.(pid)
 
     # Creat the continuation.
+    {fn observer ->
+       GenObservable.send_to(pid, observer)
+     end, pid}
+  end
+
+  @doc """
+  Delays the given observable for n miliseconds. 
+  
+  More information: http://reactivex.io/documentation/operators/delay.html
+  """
+  def delay({observable_fn, _parent_pid}, n) do
+    {:ok, pid} = GenObservable.start(Delay, [n])
+
+    observable_fn.(pid)
+    
     {fn observer ->
        GenObservable.send_to(pid, observer)
      end, pid}
