@@ -13,27 +13,27 @@ defmodule Observables.Operator.CombineLatestSilent do
 
     case {value, l, r, s} do
       # No values yet.
-      {{:left, vl}, nil, nil, _} ->    	       
+      {{:left, vl}, nil, nil, _} ->
         {:novalue, {:left, vl, :right, nil, :silent, s}}
 
-      {{:right, vr}, nil, nil, _} ->		
+      {{:right, vr}, nil, nil, _} ->
         {:novalue, {:left, nil, :right, vr, :silent, s}}
 
       # Have one value, and got a newever version of that value.
-      {{:left, vl}, _, nil, _} ->	       
+      {{:left, vl}, _, nil, _} ->
         {:novalue, {:left, vl, :right, nil, :silent, s}}
 
-      {{:right, vr}, nil, _, _} ->  		
+      {{:right, vr}, nil, _, _} ->
         {:novalue, {:left, nil, :right, vr, :silent, s}}
 
       # Already have the other value.
-      {{:left, vl}, nil, vr, :right} ->    	       
+      {{:left, vl}, nil, vr, :right} ->
         {:value, {vl, vr}, {:left, vl, :right, vr, :silent, s}}
 
-      {{:left, vl}, nil, vr, :left} ->  	       
+      {{:left, vl}, nil, vr, :left} ->
         {:novalue, {:left, vl, :right, vr, :silent, s}}
 
-      {{:right, vr}, vl, nil, :right} ->  		
+      {{:right, vr}, vl, nil, :right} ->
         {:novalue, {:left, vl, :right, vr, :silent, s}}
 
       {{:right, vr}, vl, nil, :left} ->

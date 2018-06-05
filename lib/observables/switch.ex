@@ -18,9 +18,9 @@ defmodule Observables.Operator.Switch do
     # Unsubscribe to the previous observer we were forwarding.
     if s != nil do
       {:forwarder, forwarder, :sender, observable} = s
-      {_f, pidf} = forwarder
+      pidf = forwarder
       GenObservable.stop_send_to(pidf, self())
-      {_f, pids} = observable
+      pids = observable
       GenObservable.stop_send_to(pids, pidf)
     end
 

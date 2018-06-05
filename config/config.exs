@@ -3,7 +3,7 @@
 use Mix.Config
 
 config :logger, level:
-    :error
+    :info
 
 # This configuration is loaded before any dependency and is restricted
 # to this project. If another project depends on this project, this

@@ -134,10 +134,10 @@ defmodule Observables.GenObservable do
           state.listeningto
           |> Enum.filter(fn sub -> sub != pid end)
 
-        if count(new_subs) == 0 do
-          Logger.warn("#{inspect(self())} all dependencies done, stopping ourselves.")
-          cast(self(), :stop)
-        end
+        # if count(new_subs) == 0 do
+        #   Logger.warn("#{inspect(self())} all dependencies done, stopping ourselves.")
+        #   cast(self(), :stop)
+        # end
 
         {:noreply, %{state | listeningto: new_subs}}
     end
@@ -249,7 +249,7 @@ defmodule Observables.GenObservable do
   Makes an observable stop and gracefully shut down.
   """
   def stop(producer, reason \\ :normal) do
-    #cast(producer, {:stop, reason})
+    # cast(producer, {:stop, reason})
     cast(producer, :stop)
   end
 

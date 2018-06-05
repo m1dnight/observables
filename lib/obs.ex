@@ -1,5 +1,6 @@
 defmodule Observables.Obs do
   alias Observables.GenObservable
+
   alias Observables.Operator.{
     Switch,
     FromEnum,
@@ -59,9 +60,10 @@ defmodule Observables.Obs do
 
     Process.send_after(pid, {:event, :spit}, delay)
 
-    {fn observer ->
-       GenObservable.send_to(pid, observer)
-     end, pid}
+    # {fn observer ->
+    #    GenObservable.send_to(pid, observer)
+    #  end, pid}
+    pid
   end
 
   @doc """
@@ -76,9 +78,7 @@ defmodule Observables.Obs do
 
     Process.send_after(pid, {:event, :tick}, delay)
 
-    {fn observer ->
-       GenObservable.send_to(pid, observer)
-     end, pid}
+    pid
   end
 
   @doc """
@@ -100,18 +100,18 @@ defmodule Observables.Obs do
   # CONSUMER AND PRODUCER ########################################################
 
   @doc """
-  Combine the emissions of multiple Observables together via a specified function 
+  Combine the emissions of multiple Observables together via a specified function
   and emit single items for each combination based on the results of this function.
 
   More information: http://reactivex.io/documentation/operators/zip.html
   """
   def zip(l, r) do
     # We tag each value from left and right with their respective label.
-    {f_l, _pid_l} =
+    left =
       l
       |> map(fn v -> {:left, v} end)
 
-    {f_r, _pid_r} =
+    right =
       r
       |> map(fn v -> {:right, v} end)
 
@@ -119,31 +119,46 @@ defmodule Observables.Obs do
     {:ok, pid} = GenObservable.start(Zip, [])
 
     # Make left and right send to us.
-    f_l.(pid)
-    f_r.(pid)
+    GenObservable.send_to(left, pid)
+    GenObservable.send_to(right, pid)
 
     # Creat the continuation.
-    {fn observer ->
-       GenObservable.send_to(pid, observer)
-     end, pid}
+    pid
   end
 
   @doc """
-  Combine two observables into a single observable that will emit the events 
+  Combine two observables into a single observable that will emit the events
   produced by the inputs.
 
   More information: http://reactivex.io/documentation/operators/merge.html
   """
-  def merge({observable_fn_1, _parent_pid_1}, {observable_fn_2, _parent_pid_2}) do
+  def merge(left, right) do
     {:ok, pid} = GenObservable.start_link(Merge, [])
 
-    observable_fn_1.(pid)
-    observable_fn_2.(pid)
+    GenObservable.send_to(left, pid)
+    GenObservable.send_to(right, pid)
 
     # Creat the continuation.
-    {fn observer ->
-       GenObservable.send_to(pid, observer)
-     end, pid}
+    pid
+  end
+
+  @doc """
+  Combine one or more observables into a single observable that will emit the events
+  produced by the inputs. Works the same as merge/2, but expects a list of observables
+  to merge.
+
+  More information: http://reactivex.io/documentation/operators/merge.html
+  """
+  def mergen(observables) do
+    {:ok, pid} = GenObservable.start_link(Merge, [])
+
+    observables
+    |> Enum.map(fn o ->
+      GenObservable.send_to(o, pid)
+    end)
+
+    # Creat the continuation.
+    pid
   end
 
   @doc """
@@ -151,35 +166,31 @@ defmodule Observables.Obs do
 
   More information: http://reactivex.io/documentation/operators/map.html
   """
-  def map({observable_fn, _parent_pid}, f) do
+  def map(observable, f) do
     {:ok, pid} = GenObservable.start_link(Map, [f])
 
-    observable_fn.(pid)
+    GenObservable.send_to(observable, pid)
 
     # Creat the continuation.
-    {fn observer ->
-       GenObservable.send_to(pid, observer)
-     end, pid}
+    pid
   end
 
   @doc """
   Filters out values that have already been produced by any given observable.
-  Uses the default `==` function if none is given. 
+  Uses the default `==` function if none is given.
 
   The expected function should take 2 arguments, and return a boolean indication
   the equality.
 
   More information: http://reactivex.io/documentation/operators/distinct.html
   """
-  def distinct({observable_fn, _parent_pid}, f \\ fn x, y -> x == y end) do
+  def distinct(observable, f \\ fn x, y -> x == y end) do
     {:ok, pid} = GenObservable.start_link(Distinct, [f])
 
-    observable_fn.(pid)
+    GenObservable.send_to(observable, pid)
 
     # Creat the continuation.
-    {fn observer ->
-       GenObservable.send_to(pid, observer)
-     end, pid}
+    pid
   end
 
   @doc """
@@ -187,32 +198,28 @@ defmodule Observables.Obs do
 
   More information: http://reactivex.io/documentation/operators/subscribe.html
   """
-  def each({observable_fn, _parent_pid}, f) do
+  def each(observable, f) do
     {:ok, pid} = GenObservable.start_link(Each, [f])
 
-    observable_fn.(pid)
+    GenObservable.send_to(observable, pid)
 
     # Creat the continuation.
-    {fn observer ->
-       GenObservable.send_to(pid, observer)
-     end, pid}
+    pid
   end
 
   @doc """
-  Filters out the values that do not satisfy the given predicate. 
+  Filters out the values that do not satisfy the given predicate.
 
-  The expection function should take 1 arguments and return a boolean value. 
+  The expection function should take 1 arguments and return a boolean value.
   True if the value should be produced, false if the value should be discarded.
 
   More information: http://reactivex.io/documentation/operators/filter.html
   """
-  def filter({observable_fn, _parent_pid}, f) do
+  def filter(observable, f) do
     {:ok, pid} = GenObservable.start_link(Filter, [f])
-    observable_fn.(pid)
+    GenObservable.send_to(observable, pid)
     # Creat the continuation.
-    {fn observer ->
-       GenObservable.send_to(pid, observer)
-     end, pid}
+    pid
   end
 
   @doc """
@@ -220,7 +227,7 @@ defmodule Observables.Obs do
 
   More information: http://reactivex.io/documentation/operators/startwith.html
   """
-  def starts_with({observable_fn, _parent_pid}, start_vs) do
+  def starts_with(observable, start_vs) do
     # Start the producer/consumer server.
     {:ok, pid} = GenObservable.start_link(StartsWith, [])
 
@@ -233,35 +240,30 @@ defmodule Observables.Obs do
       GenObservable.send_event(pid, v)
     end
 
-    observable_fn.(pid)
+    GenObservable.send_to(observable, pid)
 
     # Creat the continuation.
-    {fn consumer ->
-       # This sets the observer as our dependency.
-       GenObservable.send_to(pid, consumer)
-     end, pid}
+    pid
   end
 
   @doc """
-  Convert an Observable that emits Observables into a single Observable that 
+  Convert an Observable that emits Observables into a single Observable that
   emits the items emitted by the most-recently-emitted of those Observables.
 
   More information: http://reactivex.io/documentation/operators/switch.html
   """
-  def switch({observable_fn, _parent_pid}) do
+  def switch(observable) do
     # Start the producer/consumer server.
     {:ok, pid} = GenObservable.start_link(Switch, [])
 
-    observable_fn.(pid)
+    GenObservable.send_to(observable, pid)
 
     # Creat the continuation.
-    {fn observer ->
-       GenObservable.send_to(pid, observer)
-     end, pid}
+    pid
   end
 
   @doc """
-  Chunks items produces by the observable together bounded in time. 
+  Chunks items produces by the observable together bounded in time.
   As soon as the set delay has been passed, the observable emits an enumerable
   with the elements gathered up to that point. Does not emit the empty list.
 
@@ -270,17 +272,15 @@ defmodule Observables.Obs do
 
   Source: http://reactivex.io/documentation/operators/buffer.html
   """
-  def chunk({observable_fn, _parent_pid}, interval) do
+  def chunk(observable, interval) do
     {:ok, pid} = GenObservable.start_link(Chunk, [interval])
 
-    observable_fn.(pid)
+    GenObservable.send_to(observable, pid)
 
     Process.send_after(pid, {:event, :flush}, interval)
 
     # Create the continuation.
-    {fn observer ->
-       GenObservable.send_to(pid, observer)
-     end, pid}
+    pid
   end
 
   @doc """
@@ -289,35 +289,31 @@ defmodule Observables.Obs do
 
   Source: http://reactivex.io/documentation/operators/buffer.html
   """
-  def buffer({observable_fn, _parent_pid}, size) do
+  def buffer(observable, size) do
     {:ok, pid} = GenObservable.start_link(Buffer, [size])
 
-    observable_fn.(pid)
+    GenObservable.send_to(observable, pid)
 
     # Create the continuation.
-    {fn observer ->
-       GenObservable.send_to(pid, observer)
-     end, pid}
+    pid
   end
 
   @doc """
-  Applies a given procedure to an observable's value, and its previous result. 
+  Applies a given procedure to an observable's value, and its previous result.
   Works in the same way as the Enum.scan function:
 
-  Enum.scan(1..10, fn(x,y) -> x + y end) 
+  Enum.scan(1..10, fn(x,y) -> x + y end)
   => [1, 3, 6, 10, 15, 21, 28, 36, 45, 55]
 
   More information: http://reactivex.io/documentation/operators/scan.html
   """
-  def scan({observable_fn, _parent_pid}, f, default \\ nil) do
+  def scan(observable, f, default \\ nil) do
     {:ok, pid} = GenObservable.start_link(Scan, [f, default])
 
-    observable_fn.(pid)
+    GenObservable.send_to(observable, pid)
 
     # Creat the continuation.
-    {fn observer ->
-       GenObservable.send_to(pid, observer)
-     end, pid}
+    pid
   end
 
   @doc """
@@ -325,15 +321,13 @@ defmodule Observables.Obs do
 
   More information: http://reactivex.io/documentation/operators/take.html
   """
-  def take({observable_fn, _parent_pid}, n) do
+  def take(observable, n) do
     {:ok, pid} = GenObservable.start_link(Take, [n])
 
-    observable_fn.(pid)
+    GenObservable.send_to(observable, pid)
 
     # Creat the continuation.
-    {fn observer ->
-       GenObservable.send_to(pid, observer)
-     end, pid}
+    pid
   end
 
   @doc """
@@ -342,7 +336,7 @@ defmodule Observables.Obs do
 
   E.g.
   1 -> 2 ------> 3
-  A -----> B ------> C 
+  A -----> B ------> C
   =
   1A --> 2A -> 2B -> 3B -> 3C
 
@@ -353,12 +347,12 @@ defmodule Observables.Obs do
     right_initial = Keyword.get(opts, :right)
 
     # We tag each value from left and right with their respective label.
-    {f_l, _pid_l} =
+    left =
       l
       |> Observables.Obs.inspect()
       |> map(fn v -> {:left, v} end)
 
-    {f_r, _pid_r} =
+    right =
       r
       |> Observables.Obs.inspect()
       |> map(fn v -> {:right, v} end)
@@ -367,26 +361,24 @@ defmodule Observables.Obs do
     {:ok, pid} = GenObservable.start(CombineLatest, [left_initial, right_initial])
 
     # Make left and right send to us.
-    f_l.(pid)
-    f_r.(pid)
+    GenObservable.send_to(left, pid)
+    GenObservable.send_to(right, pid)
 
     # Creat the continuation.
-    {fn observer ->
-       GenObservable.send_to(pid, observer)
-     end, pid}
+    pid
   end
 
   @doc """
   Given two observables, merges them together and always merges the last result of on of both, and
-  reuses the last value from the other. 
+  reuses the last value from the other.
 
-  The nuance with combinelatest here is that one of both observables will not trigger an update, 
+  The nuance with combinelatest here is that one of both observables will not trigger an update,
   but will update silently.
 
 
   E.g.
   1 -> 2 ------> 3
-  A -----> B ------> C 
+  A -----> B ------> C
   =
   1A --> 2A ----> 3B
 
@@ -398,12 +390,12 @@ defmodule Observables.Obs do
     silent = Keyword.get(opts, :silent, :right)
 
     # We tag each value from left and right with their respective label.
-    {f_l, _pid_l} =
+    left =
       l
       |> Observables.Obs.inspect()
       |> map(fn v -> {:left, v} end)
 
-    {f_r, _pid_r} =
+    right =
       r
       |> Observables.Obs.inspect()
       |> map(fn v -> {:right, v} end)
@@ -412,28 +404,24 @@ defmodule Observables.Obs do
     {:ok, pid} = GenObservable.start(CombineLatestSilent, [left_initial, right_initial, silent])
 
     # Make left and right send to us.
-    f_l.(pid)
-    f_r.(pid)
+    GenObservable.send_to(left, pid)
+    GenObservable.send_to(right, pid)
 
     # Creat the continuation.
-    {fn observer ->
-       GenObservable.send_to(pid, observer)
-     end, pid}
+    pid
   end
 
   @doc """
-  Delays the given observable for n miliseconds. 
-  
+  Delays the given observable for n miliseconds.
+
   More information: http://reactivex.io/documentation/operators/delay.html
   """
-  def delay({observable_fn, _parent_pid}, n) do
+  def delay(observable, n) do
     {:ok, pid} = GenObservable.start(Delay, [n])
 
-    observable_fn.(pid)
-    
-    {fn observer ->
-       GenObservable.send_to(pid, observer)
-     end, pid}
+    GenObservable.send_to(observable, pid)
+
+    pid
   end
 
   # TERMINATORS ##################################################################
@@ -442,8 +430,8 @@ defmodule Observables.Obs do
   Prints out the values produces by this observable. Keep in mind that this only works
   for values that are actually printable. If not sure, use inspect/1 instead.
   """
-  def print({observable_fn, parent_pid}) do
-    map({observable_fn, parent_pid}, fn v ->
+  def print(observable) do
+    map(observable, fn v ->
       IO.puts(v)
       v
     end)
@@ -452,8 +440,8 @@ defmodule Observables.Obs do
   @doc """
   Same as the print/1 function, but uses inspect to print instead of puts.
   """
-  def inspect({observable_fn, parent_pid}) do
-    map({observable_fn, parent_pid}, fn v ->
+  def inspect(observable) do
+    map(observable, fn v ->
       IO.inspect(v)
       v
     end)
