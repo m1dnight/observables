@@ -28,27 +28,6 @@ defmodule Observables.Obs do
   # GENERATORS ###################################################################
 
   @doc """
-  from_pid/1 can be considered to be a subject. Any process that implements the GenObservable interface can be used a subject, actually.
-  Example:
-  Spawn a subject using the `Subject` module.
-  {:ok, pid1} = GenObservable.spawn_supervised(Subject, 0)
-
-  Print out each value that the subject produces.
-  Obs.from_pid(pid1)
-  |> Obs.print()
-
-  Send an event to the subject.
-  GenObservable.send_event(pid1, :value)
-
-  More information: http://reactivex.io/documentation/subject.html
-  """
-  def from_pid(producer) do
-    {fn consumer ->
-       GenObservable.send_to(producer, consumer)
-     end, producer}
-  end
-
-  @doc """
   Takes an enumerable and turns it into an observable that produces a value
   for each value of the enumerable.
   If the enum is consumed, returns done.
