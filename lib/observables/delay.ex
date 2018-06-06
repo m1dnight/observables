@@ -15,7 +15,7 @@ defmodule Observables.Operator.Delay do
         {:value, x, state}
 
       v ->
-        Logger.warn "Sending after #{delay}: #{inspect v}"
+        Logger.warn("Sending after #{delay}: #{inspect(v)}")
         Process.send_after(self(), {:event, {:delayed, v}}, delay)
         {:novalue, state}
     end

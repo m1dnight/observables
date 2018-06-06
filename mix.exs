@@ -33,7 +33,6 @@ defmodule Observables.MixProject do
     "Observables in the spirit of Reactive Extensions for Elixir."
   end
 
-
   defp package() do
     [
       # This option is only needed when you don't want to use the OTP application name
@@ -44,5 +43,5 @@ defmodule Observables.MixProject do
       licenses: ["MIT"],
       links: %{"GitHub" => "https://github.com/m1dnight/observables"}
     ]
-end
+  end
 end

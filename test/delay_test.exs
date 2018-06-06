@@ -15,6 +15,7 @@ defmodule DelayTest do
       Logger.error("Got #{v}")
       send(testproc, v)
     end)
+
     # Receive no other values.
     receive do
       _x ->
@@ -29,6 +30,5 @@ defmodule DelayTest do
     |> Enum.map(fn v ->
       assert_receive(^v, 5000, "did not get this message #{v}")
     end)
-
   end
 end

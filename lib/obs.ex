@@ -173,6 +173,27 @@ defmodule Observables.Obs do
   end
 
   @doc """
+  Filters out values that have already been produced by any given observable.
+  Allows duplicate values as soon as a different value has been produces.
+
+
+  Uses the default `==` function if none is given.
+
+  The expected function should take 2 arguments, and return a boolean indication
+  the equality.
+
+  More information: http://reactivex.io/documentation/operators/distinct.html and http://rxmarbles.com/#distinctUntilChanged
+  """
+  def distinctuntilchanged(observable, f \\ fn x, y -> x == y end) do
+    {:ok, pid} = GenObservable.start_link(Distinct, [f])
+
+    GenObservable.send_to(observable, pid)
+
+    # Creat the continuation.
+    pid
+  end
+
+  @doc """
   Same as map, but returns the original value. Typically used for side effects.
 
   More information: http://reactivex.io/documentation/operators/subscribe.html
