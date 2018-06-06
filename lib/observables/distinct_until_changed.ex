@@ -4,14 +4,14 @@ defmodule Observables.Operator.DistinctUntilChanged do
 
   def init([comparator]) do
     Logger.debug("Distinct Until Changed: #{inspect(self())}")
-    {:ok, %{:comp => comparator, :seen => []}}
+    {:ok, %{:comp => comparator, :last => []}}
   end
 
-  def handle_event(v, state = %{:comp => f, :seen => xs}) do
-    seen? = Enum.any?(xs, fn seen -> f.(v, seen) end)
+  def handle_event(v, state = %{:comp => f, :last => last}) do
+    same? = f.(v, last)
 
-    if not seen? do
-      {:value, v, %{:comp => f, :seen => []}}
+    if not same? do
+      {:value, v, %{:comp => f, :last => last}}
     else
       {:novalue, state}
     end

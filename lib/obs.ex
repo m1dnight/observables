@@ -18,7 +18,8 @@ defmodule Observables.Obs do
     Take,
     CombineLatest,
     CombineLatestSilent,
-    Delay
+    Delay,
+    DistinctUntilChanged
   }
 
   alias Enum
@@ -185,7 +186,7 @@ defmodule Observables.Obs do
   More information: http://reactivex.io/documentation/operators/distinct.html and http://rxmarbles.com/#distinctUntilChanged
   """
   def distinctuntilchanged(observable, f \\ fn x, y -> x == y end) do
-    {:ok, pid} = GenObservable.start_link(Distinct, [f])
+    {:ok, pid} = GenObservable.start_link(DistinctUntilChanged, [f])
 
     GenObservable.send_to(observable, pid)
 
