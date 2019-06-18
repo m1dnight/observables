@@ -454,11 +454,11 @@ defmodule Observables.Obs do
   as soon as the dependency has signaled it's stopping.
   Do not use this on an infinite stream, for obvious reasons.
   """
-  def to_list({observable_fn, parent_pid}) do
+  def to_list(observable) do
     ref = :erlang.make_ref()
     {:ok, pid} = GenObservable.start_link(ToList, [{self(), ref}])
 
-    observable_fn.(pid)
+    GenObservable.send_to(observable, pid)
 
     # Our process is now buffering. 
     # When the dependency stops, we will stop as well, and we need to getg
