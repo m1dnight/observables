@@ -18,6 +18,7 @@ defmodule Observables.Obs do
     Take,
     CombineLatest,
     CombineLatestSilent,
+    ToList,
     Delay,
     DistinctUntilChanged
   }
@@ -447,4 +448,23 @@ defmodule Observables.Obs do
       v
     end)
   end
+
+  @doc """
+  Aggregates all values produces by its dependency, and stops and returns them in a list 
+  as soon as the dependency has signaled it's stopping.
+  Do not use this on an infinite stream, for obvious reasons.
+  """
+  def to_list({observable_fn, parent_pid}) do
+    ref = :erlang.make_ref()
+    {:ok, pid} = GenObservable.start_link(ToList, [{self(), ref}])
+
+    observable_fn.(pid)
+
+    # Our process is now buffering. 
+    # When the dependency stops, we will stop as well, and we need to getg
+    receive do
+      {^ref, vs} ->
+        vs
+    end
+end
 end

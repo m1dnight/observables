@@ -2,28 +2,23 @@ defmodule Observables.Operator.ToList do
   @moduledoc false
   use Observables.GenObservable
 
-  def init([action, state]) do
-    {:ok, %{:state => state, :action => action}}
+  def init([waiter]) do
+    Logger.debug("ToList: #{inspect(self())}")
+    {:ok, %{:buffer => [], :waiter => waiter}}
   end
 
-  def handle_event(e, %{:state => s, :action => a}) do
-    case a.(e, s) do
-      {:value, v, new_s} ->
-        {:value, v, %{:state => new_s, :action => a}}
-
-      {:novalue, new_s} ->
-        {:novalue, %{:state => new_s, :action => a}}
-
-      {:buffer, v, new_s} ->
-        {:buffer, v, %{:state => new_s, :action => a}}
-
-      {:done, new_s} ->
-        Logger.debug("done")
-        {:done, new_s}
-    end
+  # A regular value from the dependencies.
+  def handle_event(v, %{:waiter => waiter, :buffer => bs}) do
+    {:novalue, %{:waiter => waiter, :buffer => bs ++ [v]}}
   end
 
-  def handle_done(_pid, state) do
-    {:ok, state}
+  def handle_done(pid, %{:waiter => waiter, :buffer => bs}) do
+    # The dependency has signaled it will no longer produce.
+    # Send the buffer over to the waiting pid.
+    Logger.debug("#{inspect(self())}: dependency stopping: #{inspect(pid)}")
+
+    {pid, ref} = waiter
+    send(pid, {ref, bs})
+    {:ok, :done}
   end
 end

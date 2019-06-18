@@ -7,9 +7,9 @@ defmodule DistinctUntilChangedTest do
   test "distinctuntilchanged" do
     testproc = self()
 
-    xs = [1,2,3,4,1,2,3,4]
+    xs = [1, 2, 3, 4, 1, 2, 3, 4]
 
-    expected = [1,2,3,4,1,2,3,4]
+    expected = [1, 2, 3, 4, 1, 2, 3, 4]
 
     xs
     |> Obs.from_enum(100)
@@ -19,7 +19,7 @@ defmodule DistinctUntilChangedTest do
 
     expected
     |> Enum.map(fn x ->
-      assert_receive(^x, 1000, "did not get this message! #{inspect x}")
+      assert_receive(^x, 1000, "did not get this message! #{inspect(x)}")
     end)
 
     receive do
