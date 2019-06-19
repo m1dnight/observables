@@ -20,7 +20,8 @@ defmodule Observables.Obs do
     CombineLatestSilent,
     ToList,
     Delay,
-    DistinctUntilChanged
+    DistinctUntilChanged,
+    MergeContinuous
   }
 
   alias Enum
@@ -118,6 +119,21 @@ defmodule Observables.Obs do
 
     GenObservable.send_to(left, pid)
     GenObservable.send_to(right, pid)
+
+    # Creat the continuation.
+    pid
+  end  
+  
+  @doc """
+  Given an observable which emits observables, mergeContinuous will
+  merge all of them and output their values.
+
+  More information: http://reactivex.io/documentation/operators/merge.html
+  """
+  def mergeContinuous(observable) do
+    {:ok, pid} = GenObservable.start_link(MergeContinuous, [])
+
+    GenObservable.send_to(observable, pid)
 
     # Creat the continuation.
     pid
