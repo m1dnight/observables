@@ -24,6 +24,7 @@ defmodule Observables.Operator.MergeContinuous do
   end
 
   def handle_done(_pid, state) do
+    # TODO
     {:ok, state}
   end
 end

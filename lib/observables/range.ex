@@ -31,6 +31,6 @@ defmodule Observables.Operator.Range do
 
   def handle_done(pid, _state) do
     Logger.debug("#{inspect(self())}: dependency stopping: #{inspect(pid)}")
-    {:ok, :continue}
+    {:ok, :done}
   end
 end

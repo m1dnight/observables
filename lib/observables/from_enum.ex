@@ -19,6 +19,6 @@ defmodule Observables.Operator.FromEnum do
 
   def handle_done(pid, _state) do
     Logger.debug("#{inspect(self())}: dependency stopping: #{inspect(pid)}")
-    {:ok, :continue}
+    {:ok, :done}
   end
 end
