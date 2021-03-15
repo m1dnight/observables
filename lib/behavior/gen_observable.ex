@@ -60,6 +60,7 @@ defmodule Observables.GenObservable do
   by the programmer.
   """
   def init({mod, args}) do
+    Process.flag :trap_exit, true
     case mod.init(args) do
       {:ok, state} ->
         # Initial state of Observable

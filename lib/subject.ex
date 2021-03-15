@@ -10,7 +10,7 @@ defmodule Observables.Subject do
   """
 
   def create() do
-    {:ok, pid} = GenObservable.spawn_supervised(Observables.Operator.Subject)
+    {:ok, pid} = GenObservable.start(Observables.Operator.Subject, [])
 
     pid
   end
