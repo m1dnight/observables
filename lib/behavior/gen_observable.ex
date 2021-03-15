@@ -75,10 +75,16 @@ defmodule Observables.GenObservable do
   ################
 
   def handle_cast({:send_to, pid}, state) do
+    # Add the dependency to our downstreams.
     {:noreply, %{state | listeners: [pid | state.listeners]}}
   end
 
   def handle_cast({:listen_to, pid}, state) do
+    # Monitor the upstream.
+    Process.monitor(pid)
+    Logger.debug("#{inspect(self())} monitoring upstream #{inspect(pid)}")
+
+    # Add the process to our upstreams.
     {:noreply, %{state | listeningto: [pid | state.listeningto]}}
   end
 
@@ -205,7 +211,28 @@ defmodule Observables.GenObservable do
     {:noreply, state}
   end
 
-  def terminate(_reason, _state) do
+  def handle_info({:DOWN, _ref, :process, pid, _reason}, state) do
+    cond do
+      Enum.member?(state.listeners, pid) ->
+        Logger.debug("#{inspect(self())} Downstream operator died: #{inspect(pid)}")
+        {:noreply, state}
+
+      Enum.member?(state.listeningto, pid) ->
+        Logger.debug("#{inspect(self())} Upstream operator died: #{inspect(pid)}")
+        cast(self(), {:dependency_stopping, pid})
+        {:noreply, state}
+
+      true ->
+        Logger.error(
+          "#{inspect(self())} Operator died, but not an upstream or downstream? This should not happen."
+        )
+
+        {:noreply, state}
+    end
+  end
+
+  def terminate(reason, _state) do
+    Logger.debug "Terminating: #{inspect reason}"
     :ok
   end
 
